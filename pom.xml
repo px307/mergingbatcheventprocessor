@@ -4,7 +4,7 @@
 	<groupId>org.neverfear.disruptor</groupId>
 	<artifactId>mergingbatcheventprocessor</artifactId>
 	<description>An event processor that implements a merging queue for the disruptor</description>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<properties>
 		<disruptor.version>2.10.1</disruptor.version>
 		<mockito.version>1.9.0</mockito.version>
