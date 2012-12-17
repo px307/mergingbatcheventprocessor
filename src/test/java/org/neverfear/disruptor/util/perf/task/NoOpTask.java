@@ -16,7 +16,7 @@ public class NoOpTask<E> implements IBenchmarkTask<E> {
 	}
 
 	@Override
-	public void printResults(final PrintStream out) {
+	public void printHumanResults(final PrintStream out) {
 		// No results to print
 	}
 

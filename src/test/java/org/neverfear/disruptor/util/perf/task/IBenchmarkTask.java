@@ -26,5 +26,5 @@ public interface IBenchmarkTask<E> {
 	 * 
 	 * @param out
 	 */
-	void printResults(final PrintStream out);
+	void printHumanResults(final PrintStream out);
 }

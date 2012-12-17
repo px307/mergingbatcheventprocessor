@@ -97,7 +97,7 @@ public final class MeasureLatencyTask<E extends ITimestampedEvent> implements IB
 	}
 
 	@Override
-	public void printResults(final PrintStream out) {
+	public void printHumanResults(final PrintStream out) {
 		final Stats stats = calcStats();
 		out.println("Latency statistics:");
 		out.format("\tCount:%d\n", stats.count);

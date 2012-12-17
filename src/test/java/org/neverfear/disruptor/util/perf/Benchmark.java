@@ -35,16 +35,21 @@ import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SingleThreadedClaimStrategy;
 
 public final class Benchmark {
+	private static final int MAX_RUNS = 2000;
+
+	private static final int TEST_PAUSE_MILLIS = 1;
+
 	private static final double ONE_SECOND_IN_NANOS = TimeUnit.SECONDS.toNanos(1);
 
-	private static final int RUN_COUNT = 10;
+	private static final int THROUGHPUT_BATCH_SIZE = 1000000;
+	private static final int LATENCY_BATCH_SIZE = 100;
 	private static final int DEFAULT_EVENT_COUNT = Integer.MAX_VALUE;
 
 	private static final String[] TOPICS = new String[] { "Red", "Green", "Blue", "Yellow", "White" };
 	private static final String[] PAYLOADS = new String[] { "I was going to be a banker but I lost interest",
 		"Monkey is better than poverty, if only for financial reasons", "Gentlemen prefer bonds" };
 
-	private static final int BUFFER_SIZE = 0x100000;
+	private static final int BUFFER_SIZE = 0x200000;
 
 	private enum ProcessorType {
 		BATCH, MERGE, LINKED, TICKET
@@ -150,10 +155,10 @@ public final class Benchmark {
 		handler.waitUntilStopped();
 		producer.waitUntilStopped();
 
-		task.printResults(resultStream);
-		task.printResults(System.out);
-		printStats(resultStream, watch, producer, handler, task);
-		printStats(System.out, watch, producer, handler, task);
+		task.printHumanResults(resultStream);
+		task.printHumanResults(System.out);
+		printHumanStats(resultStream, watch, producer, handler, task);
+		printHumanStats(System.out, watch, producer, handler, task);
 	}
 
 	/**
@@ -163,7 +168,7 @@ public final class Benchmark {
 	 * @param producer
 	 * @param handler
 	 */
-	private static void printStats(final PrintStream out, final Stopwatch watch, final BenchmarkEventProducer producer,
+	private static void printHumanStats(final PrintStream out, final Stopwatch watch, final BenchmarkEventProducer producer,
 			final IBenchmarkEventHandler handler, final IBenchmarkTask<BenchmarkEvent> task) {
 
 		final long elapsedTimeInMilliseconds = watch.elapsedTime(TimeUnit.MILLISECONDS);
@@ -245,18 +250,55 @@ public final class Benchmark {
 			eventCount = DEFAULT_EVENT_COUNT;
 		}
 
+		final int candidateRunCount = calcRunCount(benchmarkType, eventCount);
+		final int eventsPerRun = eventCount / candidateRunCount;
+
+		// Don't ever both doing more than 2000 runs
+		final int runCount = Math.min(MAX_RUNS, candidateRunCount);
+
+
 		final String resultFilename = Joiner.on('.').join(benchmarkType.name().toLowerCase(),
-				processorType.name().toLowerCase(), Long.toString(sleepPeriod), "benchmark", "txt");
+				processorType.name().toLowerCase(), Long.toString(sleepPeriod),
+				"benchmark", "txt");
 
-		final PrintStream stream = new PrintStream(new FileOutputStream(new File(resultFilename)));
-
-		final Benchmark bench = new Benchmark(processorType, benchmarkType, sleepPeriod, eventCount);
-		for (int run = 0; run < RUN_COUNT; run++) {
-			stream.println("Run " + run);
-			System.out.println("Run " + run);
-			bench.runPerfTest(stream);
+		try (PrintStream stream = new PrintStream(new FileOutputStream(new File(resultFilename)))) {
+			final Benchmark bench = new Benchmark(processorType, benchmarkType, sleepPeriod, eventsPerRun);
+			for (int run = 0; run < runCount; run++) {
+				stream.println("Run " + run);
+				System.out.println("Run " + run);
+				bench.runPerfTest(stream);
+				Thread.sleep(TEST_PAUSE_MILLIS);
+				System.gc();
+			}
+			bench.cleanUp();
 		}
-		bench.cleanUp();
 
+	}
+
+	/**
+	 * 
+	 * We split the total events into separate runs in an attempt to bring out the true performance as the JIT gets
+	 * fired up. This is done heuristically by assuming throughput is more accurate with large batches and latency is
+	 * more accurate with sensible but small batches.
+	 * 
+	 * @param benchmarkType
+	 * @param eventCount
+	 * @return
+	 */
+	private static int calcRunCount(final BenchmarkType benchmarkType, final int eventCount) {
+		final int runCount;
+		switch (benchmarkType) {
+		case LATENCY: {
+			runCount = eventCount / LATENCY_BATCH_SIZE;
+			break;
+		}
+		case THROUGHPUT: {
+			runCount = eventCount / THROUGHPUT_BATCH_SIZE;
+			break;
+		}
+		default:
+			throw new UnsupportedOperationException("BenchmarkType: " + benchmarkType);
+		}
+		return runCount;
 	}
 }
