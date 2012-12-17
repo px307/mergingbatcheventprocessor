@@ -69,7 +69,7 @@ EventHandler<BenchmarkEvent> {
 			 * on the queue, we've previously consumed one and now the second is being processed
 			 */
 
-			// Copy the merged (current) value into the current event object for convience
+			// Copy the merged (current) value into the current event object for convenience
 			event.identifier = currentIdentifier.intValue();
 			task.execute(event);
 			threadLocalBatchCount++;
