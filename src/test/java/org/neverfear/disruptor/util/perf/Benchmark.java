@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.neverfear.disruptor.MergeStrategy;
 import org.neverfear.disruptor.MergingBatchEventProcessor;
+import org.neverfear.disruptor.PeakWaitStrategy;
 import org.neverfear.disruptor.util.perf.event.BenchmarkEvent;
 import org.neverfear.disruptor.util.perf.event.BenchmarkEventFactory;
 import org.neverfear.disruptor.util.perf.filter.IBenchmarkProducerFilter;
@@ -75,7 +76,7 @@ public final class Benchmark {
 
 	public void runPerfTest(final PrintStream resultStream) throws Exception {
 		final RingBuffer<BenchmarkEvent> ringBuffer = new RingBuffer<>(BenchmarkEventFactory.INSTANCE,
-				new SingleThreadedClaimStrategy(BUFFER_SIZE), new BusySpinWaitStrategy());
+				new SingleThreadedClaimStrategy(BUFFER_SIZE), new PeakWaitStrategy(new BusySpinWaitStrategy()));
 
 		final Stopwatch watch = new Stopwatch();
 		watch.reset();
