@@ -156,7 +156,9 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 				 * For all available sequences merge into the merging queue
 				 */
 				while (nextSequence <= availableSequence) {
-					event = mergeEvent(nextSequence, batchQueue);
+					event = ringBuffer.get(nextSequence);
+					final Object key = mergeStrategy.getMergeKey(event);
+					batchQueue.put(key, event);
 					nextSequence++;
 				}
 
@@ -221,13 +223,6 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 		}
 	}
 
-	private E mergeEvent(final long sequence, final LinkedHashMap<Object, E> batchQueue) {
-		final E event = ringBuffer.get(sequence);
-		// Merge all the events
-		final Object key = mergeStrategy.getMergeKey(event);
-		batchQueue.put(key, event);
-		return event;
-	}
 
 	/**
 	 * Utility method. Notifies the handler of processor start
