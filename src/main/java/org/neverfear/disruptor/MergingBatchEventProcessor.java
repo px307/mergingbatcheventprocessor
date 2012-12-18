@@ -114,29 +114,8 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 		final AdvanceSequence whenToAdvanceSequence = mergeStrategy.whenToAdvanceSequence();
 		final SequenceAdvanceStrategy advanceStrategy = createAdvanceStrategy(whenToAdvanceSequence);
 
-
-		final LinkedHashMap<Object, E> masterMergingQueue = new LinkedHashMap<Object, E>(
+		final LinkedHashMap<Object, E> queue = new LinkedHashMap<Object, E>(
 				mergeStrategy.estimatedKeySpace());
-
-		/*
-		 * This switch selects what the batch queue should contain. This is either a second queue or a secondary
-		 * reference to the master queue depending on the advance sequence mode
-		 */
-		final LinkedHashMap<Object, E> batchQueue;
-		switch (whenToAdvanceSequence) {
-		case AFTER_MERGE: {
-			batchQueue = new LinkedHashMap<Object, E>(mergeStrategy.estimatedKeySpace());
-			break;
-		}
-		case WHEN_PROCESSED_ALL_MERGED_EVENTS: {
-			batchQueue = masterMergingQueue;
-			break;
-		}
-		default: {
-			throw new UnsupportedOperationException("AdvanceSequence: " + whenToAdvanceSequence);
-		}
-		}
-
 
 		// Now for the real work
 		while (true) {
@@ -145,7 +124,7 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 				 * Get the next available sequence
 				 */
 				final long availableSequence;
-				if (masterMergingQueue.isEmpty()) {
+				if (queue.isEmpty()) {
 					availableSequence = sequenceBarrier.waitFor(nextSequence);
 				} else {
 					// Take a peak for a new element
@@ -157,43 +136,30 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 				 */
 				while (nextSequence <= availableSequence) {
 					event = ringBuffer.get(nextSequence);
+
 					final Object key = mergeStrategy.getMergeKey(event);
-					batchQueue.put(key, event);
+					final E mergeEvent = mergeStrategy.getMergeValue(event);
+
+					/*
+					 * This assertion is enforcing that if we are updating the sequence number after each batch then we
+					 * *must* copy the event. This assertion isn't foolproof because it doesn't walk the reference tree
+					 * and compare mutable fields by reference.
+					 */
+					assert (whenToAdvanceSequence == AdvanceSequence.AFTER_MERGE && mergeEvent != event)
+					|| (whenToAdvanceSequence != AdvanceSequence.AFTER_MERGE);
+					queue.put(key, mergeEvent);
+
 					nextSequence++;
 				}
 
-				/*
-				 * If there is a result from the merged batch then we merge it into the merge queue. The reason that we
-				 * don't do this in the previous block is if we're copying events we only want to do that if we think
-				 * we're going to be using the event.
-				 */
-				if (masterMergingQueue != batchQueue && !batchQueue.isEmpty()) {
-					// Copy all the merged events before updating the sequence
-					for (final E value : batchQueue.values()) {
-						final E mergeValue = mergeStrategy.getMergeValue(value);
-
-						/*
-						 * This assertion is enforcing that if we are updating the sequence number after each batch then
-						 * we *must* copy the event. This assertion isn't foolproof because it doesn't walk the
-						 * reference tree and compare mutable fields by reference.
-						 */
-						assert (whenToAdvanceSequence == AdvanceSequence.AFTER_MERGE && mergeValue != value)
-						|| (whenToAdvanceSequence != AdvanceSequence.AFTER_MERGE);
-
-						final Object key = mergeStrategy.getMergeKey(value);
-						masterMergingQueue.put(key, mergeValue);
-					}
-					batchQueue.clear();
-				}
-
-				final Iterator<E> mergeIterator = masterMergingQueue.values().iterator();
+				final Iterator<E> mergeIterator = queue.values().iterator();
 				final E oldestEvent = mergeIterator.next();
 				mergeIterator.remove();
 
 				event = oldestEvent;
 				eventHandler.onMergedEvent(oldestEvent);
 
-				advanceStrategy.advance(sequence, nextSequence, masterMergingQueue);
+				advanceStrategy.advance(sequence, nextSequence, queue);
 
 			} catch (final AlertException ex) {
 				if (!running.get()) {
