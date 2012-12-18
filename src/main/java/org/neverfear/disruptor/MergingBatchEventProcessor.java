@@ -117,6 +117,8 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 		final LinkedHashMap<Object, E> queue = new LinkedHashMap<Object, E>(
 				mergeStrategy.estimatedKeySpace());
 
+		Iterator<E> mergeIterator = queue.values().iterator();
+
 		// Now for the real work
 		while (true) {
 			try {
@@ -149,10 +151,12 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 					|| (whenToAdvanceSequence != AdvanceSequence.AFTER_MERGE);
 					queue.put(key, mergeEvent);
 
+					// Since we've modified the collection we need a fresh iterator
+					mergeIterator = queue.values().iterator();
+
 					nextSequence++;
 				}
 
-				final Iterator<E> mergeIterator = queue.values().iterator();
 				final E oldestEvent = mergeIterator.next();
 				mergeIterator.remove();
 
