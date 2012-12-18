@@ -112,13 +112,31 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 		long nextSequence = sequence.get() + 1L;
 
 		final AdvanceSequence whenToAdvanceSequence = mergeStrategy.whenToAdvanceSequence();
-		SequenceAdvanceStrategy advanceStrategy = createAdvanceStrategy(whenToAdvanceSequence);
+		final SequenceAdvanceStrategy advanceStrategy = createAdvanceStrategy(whenToAdvanceSequence);
 
-		// This queue contains the merged results of the current batch.
-		final LinkedHashMap<Object, E> batchQueue = createBatchQueue(whenToAdvanceSequence);
 
 		final LinkedHashMap<Object, E> masterMergingQueue = new LinkedHashMap<Object, E>(
 				mergeStrategy.estimatedKeySpace());
+
+		/*
+		 * This switch selects what the batch queue should contain. This is either a second queue or a secondary
+		 * reference to the master queue depending on the advance sequence mode
+		 */
+		final LinkedHashMap<Object, E> batchQueue;
+		switch (whenToAdvanceSequence) {
+		case AFTER_MERGE: {
+			batchQueue = new LinkedHashMap<Object, E>(mergeStrategy.estimatedKeySpace());
+			break;
+		}
+		case WHEN_PROCESSED_ALL_MERGED_EVENTS: {
+			batchQueue = masterMergingQueue;
+			break;
+		}
+		default: {
+			throw new UnsupportedOperationException("AdvanceSequence: " + whenToAdvanceSequence);
+		}
+		}
+
 
 		// Now for the real work
 		while (true) {
@@ -147,9 +165,9 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 				 * don't do this in the previous block is if we're copying events we only want to do that if we think
 				 * we're going to be using the event.
 				 */
-				if (!batchQueue.isEmpty()) {
+				if (masterMergingQueue != batchQueue && !batchQueue.isEmpty()) {
 					// Copy all the merged events before updating the sequence
-					for (E value : batchQueue.values()) {
+					for (final E value : batchQueue.values()) {
 						final E mergeValue = mergeStrategy.getMergeValue(value);
 
 						/*
@@ -158,7 +176,7 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 						 * reference tree and compare mutable fields by reference.
 						 */
 						assert (whenToAdvanceSequence == AdvanceSequence.AFTER_MERGE && mergeValue != value)
-								|| (whenToAdvanceSequence != AdvanceSequence.AFTER_MERGE);
+						|| (whenToAdvanceSequence != AdvanceSequence.AFTER_MERGE);
 
 						final Object key = mergeStrategy.getMergeKey(value);
 						masterMergingQueue.put(key, mergeValue);
@@ -191,25 +209,6 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 		running.set(false);
 	}
 
-	/**
-	 * This queue contains the merged results of the current batch. Note that if whenToAdvanceSequence is not
-	 * {@link AdvanceSequence#AFTER_MERGE} then the batch queue is empty and merging should happy straight into the
-	 * master merge queue.
-	 * 
-	 * @param whenToAdvanceSequence
-	 * @return
-	 */
-	private LinkedHashMap<Object, E> createBatchQueue(final AdvanceSequence whenToAdvanceSequence) {
-		int batchQueueInitialSize;
-		if (whenToAdvanceSequence == AdvanceSequence.AFTER_MERGE) {
-			batchQueueInitialSize = mergeStrategy.estimatedKeySpace();
-		} else {
-			batchQueueInitialSize = 0;
-		}
-		final LinkedHashMap<Object, E> batchQueue = new LinkedHashMap<Object, E>(batchQueueInitialSize);
-		return batchQueue;
-	}
-
 	private SequenceAdvanceStrategy createAdvanceStrategy(final AdvanceSequence whenToAdvanceSequence) {
 		switch (whenToAdvanceSequence) {
 		case WHEN_PROCESSED_ALL_MERGED_EVENTS:
@@ -222,8 +221,8 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 		}
 	}
 
-	private E mergeEvent(long sequence, final LinkedHashMap<Object, E> batchQueue) {
-		E event = ringBuffer.get(sequence);
+	private E mergeEvent(final long sequence, final LinkedHashMap<Object, E> batchQueue) {
+		final E event = ringBuffer.get(sequence);
 		// Merge all the events
 		final Object key = mergeStrategy.getMergeKey(event);
 		batchQueue.put(key, event);
