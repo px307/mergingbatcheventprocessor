@@ -66,7 +66,7 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 	 */
 	@Override
 	public Sequence getSequence() {
-		return sequence;
+		return this.sequence;
 	}
 
 	/*
@@ -76,8 +76,8 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 	 */
 	@Override
 	public void halt() {
-		running.set(false);
-		sequenceBarrier.alert();
+		this.running.set(false);
+		this.sequenceBarrier.alert();
 	}
 
 	/**
@@ -101,21 +101,21 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 	 */
 	@Override
 	public void run() {
-		if (!running.compareAndSet(false, true)) {
+		if (!this.running.compareAndSet(false, true)) {
 			throw new IllegalStateException("Thread is already running");
 		}
-		sequenceBarrier.clearAlert();
+		this.sequenceBarrier.clearAlert();
 
 		notifyStart();
 
 		E event = null;
-		long nextSequence = sequence.get() + 1L;
+		long nextSequence = this.sequence.get() + 1L;
 
-		final AdvanceSequence whenToAdvanceSequence = mergeStrategy.whenToAdvanceSequence();
+		final AdvanceSequence whenToAdvanceSequence = this.mergeStrategy.whenToAdvanceSequence();
 		final SequenceAdvanceStrategy advanceStrategy = createAdvanceStrategy(whenToAdvanceSequence);
 
 		final LinkedHashMap<Object, E> queue = new LinkedHashMap<Object, E>(
-				mergeStrategy.estimatedKeySpace());
+				this.mergeStrategy.estimatedKeySpace());
 
 		Iterator<E> mergeIterator = queue.values().iterator();
 
@@ -127,20 +127,20 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 				 */
 				final long availableSequence;
 				if (queue.isEmpty()) {
-					availableSequence = sequenceBarrier.waitFor(nextSequence);
+					availableSequence = this.sequenceBarrier.waitFor(nextSequence);
 				} else {
 					// Take a peak for a new element
-					availableSequence = sequenceBarrier.waitFor(nextSequence, 0, TimeUnit.NANOSECONDS);
+					availableSequence = this.sequenceBarrier.waitFor(nextSequence, 0, TimeUnit.NANOSECONDS);
 				}
 
 				/*
 				 * For all available sequences merge into the merging queue
 				 */
 				while (nextSequence <= availableSequence) {
-					event = ringBuffer.get(nextSequence);
+					event = this.ringBuffer.get(nextSequence);
 
-					final Object key = mergeStrategy.getMergeKey(event);
-					final E mergeEvent = mergeStrategy.getMergeValue(event);
+					final Object key = this.mergeStrategy.getMergeKey(event);
+					final E mergeEvent = this.mergeStrategy.getMergeValue(event);
 
 					/*
 					 * This assertion is enforcing that if we are updating the sequence number after each batch then we
@@ -151,34 +151,34 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 					|| (whenToAdvanceSequence != AdvanceSequence.AFTER_MERGE);
 					queue.put(key, mergeEvent);
 
-					// Since we've modified the collection we need a fresh iterator
-					mergeIterator = queue.values().iterator();
-
 					nextSequence++;
 				}
+
+				// Since we've modified the collection we need a fresh iterator
+				mergeIterator = queue.values().iterator();
 
 				final E oldestEvent = mergeIterator.next();
 				mergeIterator.remove();
 
 				event = oldestEvent;
-				eventHandler.onMergedEvent(oldestEvent);
+				this.eventHandler.onMergedEvent(oldestEvent);
 
-				advanceStrategy.advance(sequence, nextSequence, queue);
+				advanceStrategy.advance(this.sequence, nextSequence, queue);
 
 			} catch (final AlertException ex) {
-				if (!running.get()) {
+				if (!this.running.get()) {
 					break;
 				}
 			} catch (final Throwable ex) {
-				exceptionHandler.handleEventException(ex, nextSequence, event);
-				sequence.set(nextSequence);
+				this.exceptionHandler.handleEventException(ex, nextSequence, event);
+				this.sequence.set(nextSequence);
 				nextSequence++;
 			}
 		}
 
 		notifyShutdown();
 
-		running.set(false);
+		this.running.set(false);
 	}
 
 	private SequenceAdvanceStrategy createAdvanceStrategy(final AdvanceSequence whenToAdvanceSequence) {
@@ -198,11 +198,11 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 	 * Utility method. Notifies the handler of processor start
 	 */
 	private void notifyStart() {
-		if (eventHandler instanceof LifecycleAware) {
+		if (this.eventHandler instanceof LifecycleAware) {
 			try {
-				((LifecycleAware) eventHandler).onStart();
+				((LifecycleAware) this.eventHandler).onStart();
 			} catch (final Throwable ex) {
-				exceptionHandler.handleOnStartException(ex);
+				this.exceptionHandler.handleOnStartException(ex);
 			}
 		}
 	}
@@ -211,11 +211,11 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 	 * Utility method. Notifies the handler of processor shutdown
 	 */
 	private void notifyShutdown() {
-		if (eventHandler instanceof LifecycleAware) {
+		if (this.eventHandler instanceof LifecycleAware) {
 			try {
-				((LifecycleAware) eventHandler).onShutdown();
+				((LifecycleAware) this.eventHandler).onShutdown();
 			} catch (final Throwable ex) {
-				exceptionHandler.handleOnShutdownException(ex);
+				this.exceptionHandler.handleOnShutdownException(ex);
 			}
 		}
 	}
