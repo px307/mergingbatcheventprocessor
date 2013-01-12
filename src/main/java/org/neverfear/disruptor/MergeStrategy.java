@@ -2,6 +2,7 @@ package org.neverfear.disruptor;
 
 public interface MergeStrategy<E> {
 
+	// TODO: This should be separate strategies, not an enum
 	public enum AdvanceSequence {
 		/**
 		 * Advance the sequence number when we have processed all available mergable events. Be warned if there are
@@ -42,7 +43,7 @@ public interface MergeStrategy<E> {
 	 * @param event
 	 * @return
 	 */
-	Object getMergeKey(E event);
+	Object getMergeKey(final E event);
 
 	/**
 	 * Get the value to provide the {@link MergedEventHandler#onMergedEvent(Object)} callback.
@@ -53,7 +54,7 @@ public interface MergeStrategy<E> {
 	 * @param event
 	 * @return
 	 */
-	E getMergeValue(E event);
+	E getMergeValue(final E event);
 
 	/**
 	 * Specifies when the merging batch process should advance the sequence number. This governs when consumers behind
