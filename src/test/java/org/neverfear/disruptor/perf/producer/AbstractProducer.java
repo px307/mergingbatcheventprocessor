@@ -29,10 +29,10 @@ public abstract class AbstractProducer {
 		final long seq = this.ringBuffer.next();
 		final BenchmarkEvent event = this.ringBuffer.get(seq);
 
-		event.identifier = sequence;
 		event.topic = topic;
-		event.timestamp = System.nanoTime();
-		event.lastEvent = (sequence == this.lastEventSequenceNumber);
+		event.payload.identifier = sequence;
+		event.payload.timestamp = System.nanoTime();
+		event.payload.lastEvent = (sequence == this.lastEventSequenceNumber);
 
 		this.ringBuffer.publish(seq);
 	}

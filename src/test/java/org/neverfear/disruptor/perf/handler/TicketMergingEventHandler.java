@@ -65,10 +65,10 @@ public final class TicketMergingEventHandler extends AbstractBenchmarkEventHandl
 			 */
 
 			// TODO
-			// this.task.execute(System.nanoTime(), mergedEvent.timestamp, mergedEvent.lastEvent);
+			// this.task.execute(System.nanoTime(), mergedEvent.payload.timestamp, mergedEvent.payload.lastEvent);
 		}
 
-		if (event.lastEvent) {
+		if (event.payload.lastEvent) {
 			notifyConsumedLastEvent();
 		}
 	}

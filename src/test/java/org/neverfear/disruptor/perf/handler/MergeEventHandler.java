@@ -18,8 +18,8 @@ public final class MergeEventHandler extends AbstractBenchmarkEventHandler imple
 
 	@Override
 	public void onMergedEvent(final BenchmarkEvent event) {
-		this.task.execute(System.nanoTime(), event.timestamp, event.lastEvent);
-		if (event.lastEvent) {
+		this.task.execute(System.nanoTime(), event.payload.timestamp, event.payload.lastEvent);
+		if (event.payload.lastEvent) {
 			notifyConsumedLastEvent();
 		}
 	}

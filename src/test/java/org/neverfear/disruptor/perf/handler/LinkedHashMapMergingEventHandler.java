@@ -36,13 +36,13 @@ public final class LinkedHashMapMergingEventHandler extends AbstractBenchmarkEve
 		if (endOfBatch) {
 			// XXX: Creates garbage due to the iterator
 			for (final BenchmarkEvent e : this.mergeQueue.values()) {
-				this.task.execute(System.nanoTime(), e.timestamp, e.lastEvent);
+				this.task.execute(System.nanoTime(), e.payload.timestamp, e.payload.lastEvent);
 			}
 
 			// Empty all events so it's empty when we take the next batch
 			this.mergeQueue.clear();
 
-			if (event.lastEvent) {
+			if (event.payload.lastEvent) {
 				notifyConsumedLastEvent();
 			}
 

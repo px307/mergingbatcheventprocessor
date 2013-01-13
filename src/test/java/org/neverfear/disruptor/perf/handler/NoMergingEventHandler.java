@@ -24,8 +24,8 @@ public final class NoMergingEventHandler extends AbstractBenchmarkEventHandler i
 
 	@Override
 	public void onEvent(final BenchmarkEvent event, final long sequence, final boolean endOfBatch) throws Exception {
-		this.task.execute(System.nanoTime(), event.timestamp, event.lastEvent);
-		if (event.lastEvent) {
+		this.task.execute(System.nanoTime(), event.payload.timestamp, event.payload.lastEvent);
+		if (event.payload.lastEvent) {
 			notifyConsumedLastEvent();
 		}
 	}
