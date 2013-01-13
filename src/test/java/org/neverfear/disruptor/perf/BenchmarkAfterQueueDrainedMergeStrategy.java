@@ -1,8 +1,8 @@
-package org.neverfear.disruptor.util.perf;
+package org.neverfear.disruptor.perf;
 
 import org.neverfear.disruptor.MergeStrategy;
 import org.neverfear.disruptor.MergingBatchEventProcessor;
-import org.neverfear.disruptor.util.perf.event.BenchmarkEvent;
+import org.neverfear.disruptor.perf.event.BenchmarkEvent;
 
 /**
  * A {@link MergeStrategy} used exclusively by the benchmark. This strategy is thought to be the faster one (due to no

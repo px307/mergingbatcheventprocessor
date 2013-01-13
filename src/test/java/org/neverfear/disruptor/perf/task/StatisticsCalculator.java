@@ -1,4 +1,4 @@
-package org.neverfear.disruptor.util.perf.task;
+package org.neverfear.disruptor.perf.task;
 
 
 public final class StatisticsCalculator {

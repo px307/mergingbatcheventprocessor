@@ -1,21 +1,21 @@
-package org.neverfear.disruptor.util.perf;
+package org.neverfear.disruptor.perf;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.neverfear.disruptor.MergeStrategy;
 import org.neverfear.disruptor.PeakWaitStrategy;
-import org.neverfear.disruptor.util.perf.event.BenchmarkEvent;
-import org.neverfear.disruptor.util.perf.handler.AbstractBenchmarkEventHandler;
-import org.neverfear.disruptor.util.perf.handler.LinkedHashMapMergingEventHandler;
-import org.neverfear.disruptor.util.perf.handler.MergeEventHandler;
-import org.neverfear.disruptor.util.perf.handler.NoMergingEventHandler;
-import org.neverfear.disruptor.util.perf.producer.AbstractProducer;
-import org.neverfear.disruptor.util.perf.producer.LatencyProducer;
-import org.neverfear.disruptor.util.perf.producer.ThroughputProducer;
-import org.neverfear.disruptor.util.perf.task.MeasureLatencyTask;
-import org.neverfear.disruptor.util.perf.task.MeasureThroughputTask;
-import org.neverfear.disruptor.util.perf.task.Task;
+import org.neverfear.disruptor.perf.event.BenchmarkEvent;
+import org.neverfear.disruptor.perf.handler.AbstractBenchmarkEventHandler;
+import org.neverfear.disruptor.perf.handler.LinkedHashMapMergingEventHandler;
+import org.neverfear.disruptor.perf.handler.MergeEventHandler;
+import org.neverfear.disruptor.perf.handler.NoMergingEventHandler;
+import org.neverfear.disruptor.perf.producer.AbstractProducer;
+import org.neverfear.disruptor.perf.producer.LatencyProducer;
+import org.neverfear.disruptor.perf.producer.ThroughputProducer;
+import org.neverfear.disruptor.perf.task.MeasureLatencyTask;
+import org.neverfear.disruptor.perf.task.MeasureThroughputTask;
+import org.neverfear.disruptor.perf.task.Task;
 
 import com.lmax.disruptor.BusySpinWaitStrategy;
 import com.lmax.disruptor.SingleThreadedClaimStrategy;

@@ -1,4 +1,4 @@
-package org.neverfear.disruptor.util.perf.event;
+package org.neverfear.disruptor.perf.event;
 
 import com.lmax.disruptor.EventFactory;
 

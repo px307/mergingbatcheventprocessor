@@ -1,6 +1,6 @@
-package org.neverfear.disruptor.util.perf.producer;
+package org.neverfear.disruptor.perf.producer;
 
-import org.neverfear.disruptor.util.perf.event.BenchmarkEvent;
+import org.neverfear.disruptor.perf.event.BenchmarkEvent;
 
 import com.lmax.disruptor.RingBuffer;
 

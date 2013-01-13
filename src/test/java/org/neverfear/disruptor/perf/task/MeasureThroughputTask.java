@@ -1,9 +1,9 @@
-package org.neverfear.disruptor.util.perf.task;
+package org.neverfear.disruptor.perf.task;
 
 import java.io.PrintStream;
 import java.util.concurrent.TimeUnit;
 
-import org.neverfear.disruptor.util.perf.event.BenchmarkEvent;
+import org.neverfear.disruptor.perf.event.BenchmarkEvent;
 
 /**
  * This task measures latency on events and then delegates the execution of a task to a wrapped task.

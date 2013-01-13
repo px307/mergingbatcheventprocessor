@@ -1,10 +1,10 @@
-package org.neverfear.disruptor.util.perf.handler;
+package org.neverfear.disruptor.perf.handler;
 
 import org.neverfear.disruptor.MergeStrategy;
 import org.neverfear.disruptor.MergedEventHandler;
 import org.neverfear.disruptor.MergingBatchEventProcessor;
-import org.neverfear.disruptor.util.perf.event.BenchmarkEvent;
-import org.neverfear.disruptor.util.perf.task.Task;
+import org.neverfear.disruptor.perf.event.BenchmarkEvent;
+import org.neverfear.disruptor.perf.task.Task;
 
 import com.lmax.disruptor.EventProcessor;
 import com.lmax.disruptor.RingBuffer;

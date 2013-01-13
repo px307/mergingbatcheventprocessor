@@ -1,10 +1,10 @@
-package org.neverfear.disruptor.util.perf.handler;
+package org.neverfear.disruptor.perf.handler;
 
 import java.util.LinkedHashMap;
 
 import org.neverfear.disruptor.MergeStrategy;
-import org.neverfear.disruptor.util.perf.event.BenchmarkEvent;
-import org.neverfear.disruptor.util.perf.task.Task;
+import org.neverfear.disruptor.perf.event.BenchmarkEvent;
+import org.neverfear.disruptor.perf.task.Task;
 
 import com.lmax.disruptor.BatchEventProcessor;
 import com.lmax.disruptor.EventHandler;
