@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.neverfear.disruptor.perf.event.BenchmarkEvent.Payload;
 import org.neverfear.disruptor.perf.task.StatisticsCalculator.Results;
 
 /**
@@ -28,8 +29,8 @@ public final class MeasureLatencyTask implements Task {
 	}
 
 	@Override
-	public void execute(final long consumedTimestamp, final long publishedTimestamp, final boolean lastEvent) {
-		this.latencies.add(consumedTimestamp - publishedTimestamp);
+	public void execute(final long consumedTimestamp, final Payload payload) {
+		this.latencies.add(consumedTimestamp - payload.publishedTimestamp);
 	}
 
 	@Override
@@ -64,7 +65,10 @@ public final class MeasureLatencyTask implements Task {
 		final long[] testData = new long[] { 2, 4, 4, 4, 5, 5, 7, 9 };
 		final MeasureLatencyTask task = new MeasureLatencyTask();
 		for (final long targetNumber : testData) {
-			task.execute(TICKER_NUMBER, TICKER_NUMBER - targetNumber, false);
+			final Payload payload = new Payload();
+			payload.publishedTimestamp = TICKER_NUMBER - targetNumber;
+			payload.lastEvent = false;
+			task.execute(TICKER_NUMBER, payload);
 		}
 
 		assert Arrays.equals(testData, listOfLongToArrayOfLong(task.latencies)) : task.latencies;

@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 
 import org.neverfear.disruptor.MergeStrategy;
 import org.neverfear.disruptor.perf.event.BenchmarkEvent;
+import org.neverfear.disruptor.perf.event.BenchmarkEvent.Payload;
 import org.neverfear.disruptor.perf.task.Task;
 
 import com.lmax.disruptor.BatchEventProcessor;
@@ -22,7 +23,7 @@ import com.lmax.disruptor.RingBuffer;
 public final class LinkedHashMapMergingEventHandler extends AbstractBenchmarkEventHandler implements
 		EventHandler<BenchmarkEvent> {
 
-	private final LinkedHashMap<Object, BenchmarkEvent> mergeQueue;
+	private final LinkedHashMap<Object, Payload> mergeQueue;
 
 	public LinkedHashMapMergingEventHandler(final MergeStrategy<BenchmarkEvent> mergeStrategy, final Task task) {
 		super(mergeStrategy, task);
@@ -31,12 +32,12 @@ public final class LinkedHashMapMergingEventHandler extends AbstractBenchmarkEve
 
 	@Override
 	public void onEvent(final BenchmarkEvent event, final long sequence, final boolean endOfBatch) throws Exception {
-		this.mergeQueue.put(this.mergeStrategy.getMergeKey(event), event);
+		this.mergeQueue.put(this.mergeStrategy.getMergeKey(event), event.payload);
 
 		if (endOfBatch) {
 			// XXX: Creates garbage due to the iterator
-			for (final BenchmarkEvent e : this.mergeQueue.values()) {
-				this.task.execute(System.nanoTime(), e.payload.timestamp, e.payload.lastEvent);
+			for (final Payload payload : this.mergeQueue.values()) {
+				this.task.execute(System.nanoTime(), payload);
 			}
 
 			// Empty all events so it's empty when we take the next batch

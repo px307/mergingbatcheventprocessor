@@ -3,10 +3,16 @@ package org.neverfear.disruptor.perf.event;
 import com.lmax.disruptor.EventFactory;
 
 public final class BenchmarkEvent {
-	public final class Payload {
+	public static final class Payload {
 		public int identifier = 0;
-		public long timestamp = 0;
+		public long publishedTimestamp = 0;
 		public boolean lastEvent = false;
+
+		@Override
+		public String toString() {
+			return "Payload [identifier=" + this.identifier + ", publishedTimestamp=" + this.publishedTimestamp
+					+ ", lastEvent=" + this.lastEvent + "]";
+		}
 	}
 
 	public String topic = null;
@@ -19,5 +25,10 @@ public final class BenchmarkEvent {
 			return new BenchmarkEvent();
 		}
 	};
+
+	@Override
+	public String toString() {
+		return "BenchmarkEvent [topic=" + this.topic + ", payload=" + this.payload + "]";
+	}
 
 }

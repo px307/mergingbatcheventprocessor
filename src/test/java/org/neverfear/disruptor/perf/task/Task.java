@@ -2,6 +2,8 @@ package org.neverfear.disruptor.perf.task;
 
 import java.io.PrintStream;
 
+import org.neverfear.disruptor.perf.event.BenchmarkEvent.Payload;
+
 /**
  * Describes a very simple task interface. Upon execution a counter is kept that can be returned later. Implementors
  * typically implement a sample task used for benchmarking.
@@ -12,11 +14,10 @@ public interface Task {
 	 * 
 	 * @param consumedTimestamp
 	 *            The time an event was available for consumption
-	 * @param publishedTimestamp
+	 * @param event
 	 *            An event object to execute against.
-	 * @param lastEvent
 	 */
-	void execute(final long consumedTimestamp, final long publishedTimestamp, final boolean lastEvent);
+	void execute(final long consumedTimestamp, final Payload event);
 
 	/**
 	 * 

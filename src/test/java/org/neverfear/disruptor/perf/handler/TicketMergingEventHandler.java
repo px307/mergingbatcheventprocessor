@@ -4,6 +4,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.neverfear.disruptor.MergeStrategy;
 import org.neverfear.disruptor.perf.event.BenchmarkEvent;
+import org.neverfear.disruptor.perf.event.BenchmarkEvent.Payload;
 import org.neverfear.disruptor.perf.task.Task;
 
 import com.lmax.disruptor.BatchEventProcessor;
@@ -38,7 +39,7 @@ import com.lmax.disruptor.RingBuffer;
 public final class TicketMergingEventHandler extends AbstractBenchmarkEventHandler implements
 		EventHandler<BenchmarkEvent> {
 
-	private final ConcurrentMap<Object, Integer> data;
+	private final ConcurrentMap<Object, Payload> data;
 
 	/**
 	 * 
@@ -48,7 +49,7 @@ public final class TicketMergingEventHandler extends AbstractBenchmarkEventHandl
 	 *            The shared data store. This is shared with the {@link TicketMergingPublishFilter}.
 	 */
 	public TicketMergingEventHandler(final MergeStrategy<BenchmarkEvent> mergeStrategy, final Task task,
-			final ConcurrentMap<Object, Integer> data) {
+			final ConcurrentMap<Object, Payload> data) {
 		super(mergeStrategy, task);
 		this.data = data;
 	}
@@ -56,7 +57,7 @@ public final class TicketMergingEventHandler extends AbstractBenchmarkEventHandl
 	@Override
 	public void onEvent(final BenchmarkEvent event, final long sequence, final boolean endOfBatch) throws Exception {
 		// Removes it from the map so the event can be produced again
-		final Integer mergedEvent = this.data.remove(this.mergeStrategy.getMergeKey(event));
+		final Payload mergedEvent = this.data.remove(this.mergeStrategy.getMergeKey(event));
 		if (mergedEvent != null) {
 
 			/*
@@ -64,8 +65,7 @@ public final class TicketMergingEventHandler extends AbstractBenchmarkEventHandl
 			 * on the queue, we've previously consumed one and now the second is being processed
 			 */
 
-			// TODO
-			// this.task.execute(System.nanoTime(), mergedEvent.payload.timestamp, mergedEvent.payload.lastEvent);
+			this.task.execute(System.nanoTime(), mergedEvent);
 		}
 
 		if (event.payload.lastEvent) {

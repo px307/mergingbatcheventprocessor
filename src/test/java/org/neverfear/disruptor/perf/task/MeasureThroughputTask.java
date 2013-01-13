@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.util.concurrent.TimeUnit;
 
 import org.neverfear.disruptor.perf.event.BenchmarkEvent;
+import org.neverfear.disruptor.perf.event.BenchmarkEvent.Payload;
 
 /**
  * This task measures latency on events and then delegates the execution of a task to a wrapped task.
@@ -35,12 +36,12 @@ public final class MeasureThroughputTask implements Task {
 	}
 
 	@Override
-	public void execute(final long consumedTimestamp, final long publishedTimestamp, final boolean lastEvent) {
+	public void execute(final long consumedTimestamp, final Payload payload) {
 		if (this.startTime == 0) {
-			this.startTime = publishedTimestamp;
+			this.startTime = payload.publishedTimestamp;
 		}
 
-		if (lastEvent) {
+		if (payload.lastEvent) {
 			this.endTime = consumedTimestamp;
 		}
 		this.executionCount++;

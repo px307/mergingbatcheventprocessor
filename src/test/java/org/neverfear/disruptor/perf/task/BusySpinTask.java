@@ -2,6 +2,8 @@ package org.neverfear.disruptor.perf.task;
 
 import java.io.PrintStream;
 
+import org.neverfear.disruptor.perf.event.BenchmarkEvent.Payload;
+
 /**
  * This task busy spins for the period supplied in the constructor.
  * 
@@ -16,7 +18,7 @@ public final class BusySpinTask<E> implements Task {
 	}
 
 	@Override
-	public void execute(final long consumedTimestamp, final long publishedTimestamp, final boolean lastEvent) {
+	public void execute(final long consumedTimestamp, final Payload payload) {
 		final long endTime = consumedTimestamp + this.spinPeriod;
 
 		this.executionCount++;
