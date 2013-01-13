@@ -7,7 +7,7 @@ import java.io.PrintStream;
  * 
  * @param <E>
  */
-public final class BusySpinTask<E> implements IBenchmarkTask<E> {
+public final class BusySpinTask<E> implements Task {
 	private final long spinPeriod;
 	private int executionCount = 0;
 
@@ -16,9 +16,10 @@ public final class BusySpinTask<E> implements IBenchmarkTask<E> {
 	}
 
 	@Override
-	public void execute(final E event) {
-		final long endTime = System.nanoTime() + spinPeriod;
-		executionCount++;
+	public void execute(final long consumedTimestamp, final long publishedTimestamp, final boolean lastEvent) {
+		final long endTime = consumedTimestamp + this.spinPeriod;
+
+		this.executionCount++;
 		while (endTime > System.nanoTime()) {
 			// Busy spin
 		}
@@ -26,12 +27,17 @@ public final class BusySpinTask<E> implements IBenchmarkTask<E> {
 
 	@Override
 	public int getExecutionCount() {
-		return executionCount;
+		return this.executionCount;
 	}
 
 	@Override
-	public void printHumanResults(final PrintStream out) {
+	public void printResults(final PrintStream out) {
 		// No results to print
+	}
+
+	@Override
+	public void reset() {
+		this.executionCount = 0;
 	}
 
 }

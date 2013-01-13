@@ -6,14 +6,17 @@ import java.io.PrintStream;
  * Describes a very simple task interface. Upon execution a counter is kept that can be returned later. Implementors
  * typically implement a sample task used for benchmarking.
  */
-public interface IBenchmarkTask<E> {
+public interface Task {
 	/**
 	 * Execute the task
 	 * 
-	 * @param event
+	 * @param consumedTimestamp
+	 *            The time an event was available for consumption
+	 * @param publishedTimestamp
 	 *            An event object to execute against.
+	 * @param lastEvent
 	 */
-	void execute(final E event);
+	void execute(final long consumedTimestamp, final long publishedTimestamp, final boolean lastEvent);
 
 	/**
 	 * 
@@ -26,5 +29,10 @@ public interface IBenchmarkTask<E> {
 	 * 
 	 * @param out
 	 */
-	void printHumanResults(final PrintStream out);
+	void printResults(final PrintStream out);
+
+	/**
+	 * Reset the task to allow it to be reused.
+	 */
+	void reset();
 }

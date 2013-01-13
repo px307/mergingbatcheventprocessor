@@ -2,22 +2,27 @@ package org.neverfear.disruptor.util.perf.task;
 
 import java.io.PrintStream;
 
-public class NoOpTask<E> implements IBenchmarkTask<E> {
+public class NoOpTask implements Task {
 	private int executionCount = 0;
 
 	@Override
-	public void execute(final E event) {
-		executionCount++;
+	public void execute(final long consumedTimestamp, final long publishedTimestamp, final boolean lastEvent) {
+		this.executionCount++;
 	}
 
 	@Override
 	public int getExecutionCount() {
-		return executionCount;
+		return this.executionCount;
 	}
 
 	@Override
-	public void printHumanResults(final PrintStream out) {
+	public void printResults(final PrintStream out) {
 		// No results to print
+	}
+
+	@Override
+	public void reset() {
+		this.executionCount = 0;
 	}
 
 }

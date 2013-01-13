@@ -2,74 +2,37 @@ package org.neverfear.disruptor.util.perf.handler;
 
 import java.util.concurrent.CountDownLatch;
 
+import org.neverfear.disruptor.MergeStrategy;
 import org.neverfear.disruptor.util.perf.event.BenchmarkEvent;
-import org.neverfear.disruptor.util.perf.task.IBenchmarkTask;
+import org.neverfear.disruptor.util.perf.task.Task;
 
-import com.google.common.base.Stopwatch;
-import com.lmax.disruptor.LifecycleAware;
+import com.lmax.disruptor.EventProcessor;
+import com.lmax.disruptor.RingBuffer;
 
-public class AbstractBenchmarkEventHandler implements IBenchmarkEventHandler, LifecycleAware {
+public abstract class AbstractBenchmarkEventHandler {
 
-	private final Stopwatch watch;
-	private final CountDownLatch startLatch = new CountDownLatch(1);
-	private final CountDownLatch stopLatch = new CountDownLatch(1);
+	// Latches used to synchronise the start/stop of the consumer and the producer
 	private final CountDownLatch consumptionLatch = new CountDownLatch(1);
-	protected final IBenchmarkTask<BenchmarkEvent> task;
 
-	/**
-	 * This is an int counter used to count how many in the batch. It's non-volatile to allow the thread executing this
-	 * handler to incur minimal overhead during profiling.
-	 */
-	protected int threadLocalBatchCount = 0;
+	protected final Task task;
+	protected final MergeStrategy<BenchmarkEvent> mergeStrategy;
 
-	/**
-	 * 
-	 * @param watch
-	 *            This watch is used to take an end-timing when we've finished processing all events.
-	 * @param task
-	 *            This task is executed on every event
-	 */
-	public AbstractBenchmarkEventHandler(final Stopwatch watch, final IBenchmarkTask<BenchmarkEvent> task) {
-		this.watch = watch;
+	public AbstractBenchmarkEventHandler(final MergeStrategy<BenchmarkEvent> mergeStrategy, final Task task) {
+		this.mergeStrategy = mergeStrategy;
 		this.task = task;
 	}
 
 	/**
 	 * Notifies that all events have been consumed
 	 */
-	protected final void notifyConsumed() {
-		watch.stop();
-		consumptionLatch.countDown();
+	protected final void notifyConsumedLastEvent() {
+		this.consumptionLatch.countDown();
 	}
 
-	@Override
-	public final int getBatchCount() {
-		return threadLocalBatchCount;
-	}
-
-	@Override
-	public final void waitUntilStarted() throws InterruptedException {
-		startLatch.await();
-	}
-
-	@Override
 	public final void waitUntilConsumed() throws InterruptedException {
-		consumptionLatch.await();
+		this.consumptionLatch.await();
 	}
 
-	@Override
-	public final void waitUntilStopped() throws InterruptedException {
-		stopLatch.await();
-	}
-
-	@Override
-	public final void onStart() {
-		startLatch.countDown();
-	}
-
-	@Override
-	public final void onShutdown() {
-		stopLatch.countDown();
-	}
+	public abstract EventProcessor createEventProcessor(final RingBuffer<BenchmarkEvent> ringBuffer);
 
 }
