@@ -2,7 +2,7 @@ package org.neverfear.disruptor.util.perf.event;
 
 import com.lmax.disruptor.EventFactory;
 
-public class BenchmarkEvent {
+public final class BenchmarkEvent {
 
 	public String topic;
 	public int identifier;
