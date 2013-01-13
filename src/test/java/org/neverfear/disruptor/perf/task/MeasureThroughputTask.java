@@ -21,10 +21,10 @@ public final class MeasureThroughputTask implements Task {
 
 	private int executionCount;
 
-	private final int eventCount;
+	private final int publishedEventCount;
 
 	public MeasureThroughputTask(final int eventCount) {
-		this.eventCount = eventCount;
+		this.publishedEventCount = eventCount;
 		reset();
 	}
 
@@ -55,7 +55,7 @@ public final class MeasureThroughputTask implements Task {
 	@Override
 	public void printResults(final PrintStream out) {
 		final long timeElapsed = this.endTime - this.startTime;
-		final double averageTimePerPublishedEvent = timeElapsed / this.eventCount;
+		final double averageTimePerPublishedEvent = timeElapsed / this.publishedEventCount;
 		final long operationsPerSecond = (long) (ONE_SECOND_IN_NANOS / averageTimePerPublishedEvent);
 
 		out.format("Throughput statistics:");
