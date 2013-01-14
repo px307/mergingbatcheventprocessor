@@ -1,6 +1,8 @@
 mergingbatcheventprocessor
 ==========================
 
+**NOTE: Currently this project is a research piece and is not yet ready for production. No guarantees provided regarding it's performance or suitability yet. Stay tuned.**
+
 An event processor that implements a merging queue for the disruptor
 
 To build and test the code
