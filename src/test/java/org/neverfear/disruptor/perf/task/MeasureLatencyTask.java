@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.neverfear.disruptor.perf.SingleCondition;
 import org.neverfear.disruptor.perf.event.BenchmarkEvent.Payload;
 import org.neverfear.disruptor.perf.task.StatisticsCalculator.Results;
 
@@ -17,9 +18,11 @@ import org.neverfear.disruptor.perf.task.StatisticsCalculator.Results;
  */
 public final class MeasureLatencyTask implements Task {
 	private final List<Long> latencies;
+	private final SingleCondition onConsumedCondition;
 
-	public MeasureLatencyTask() {
+	public MeasureLatencyTask(final SingleCondition consumedCondition) {
 		this.latencies = new LinkedList<>();
+		this.onConsumedCondition = consumedCondition;
 		reset();
 	}
 
@@ -31,6 +34,7 @@ public final class MeasureLatencyTask implements Task {
 	@Override
 	public void execute(final long consumedTimestamp, final Payload payload) {
 		this.latencies.add(consumedTimestamp - payload.publishedTimestamp);
+		this.onConsumedCondition.signalAll();
 	}
 
 	@Override
@@ -63,7 +67,7 @@ public final class MeasureLatencyTask implements Task {
 	public static void main(final String... strings) {
 		final int TICKER_NUMBER = 100;
 		final long[] testData = new long[] { 2, 4, 4, 4, 5, 5, 7, 9 };
-		final MeasureLatencyTask task = new MeasureLatencyTask();
+		final MeasureLatencyTask task = new MeasureLatencyTask(new SingleCondition());
 		for (final long targetNumber : testData) {
 			final Payload payload = new Payload();
 			payload.publishedTimestamp = TICKER_NUMBER - targetNumber;

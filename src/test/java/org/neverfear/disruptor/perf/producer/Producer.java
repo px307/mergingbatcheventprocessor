@@ -1,5 +1,6 @@
 package org.neverfear.disruptor.perf.producer;
 
+import org.neverfear.disruptor.perf.SingleCondition;
 import org.neverfear.disruptor.perf.event.BenchmarkEvent;
 
 import com.lmax.disruptor.RingBuffer;
@@ -12,36 +13,49 @@ public class Producer {
 
 	private final int lastEventSequenceNumber;
 
-	private final Runnable runBetweenEvents;
+	private final ForEachEvent runBetweenEvents;
 
-	public static final class NoOpRunnable implements Runnable {
+	public interface ForEachEvent {
+		void beforeGeneration(final int eventNumber);
+	}
+
+	public static final class NoOpRunnable implements ForEachEvent {
 
 		@Override
-		public void run() {
+		public void beforeGeneration(final int eventNumber) {
+
 		}
 
 	}
 
-	public static final class BusySpinSleepRunnable implements Runnable {
-		private final long waitPeriodBetweenEvents;
+	public static final class WaitUntilConsumedRunnable implements ForEachEvent {
+		private static final long WAIT_PERIOD_BETWEEN_EVENTS = 1000;
+		private final SingleCondition onConsumedCondition;
 
-		public BusySpinSleepRunnable(final long waitPeriodBetweenEvents) {
-			assert waitPeriodBetweenEvents != 0 : "Use NoOpRunnable";
-			this.waitPeriodBetweenEvents = waitPeriodBetweenEvents;
+		public WaitUntilConsumedRunnable(final SingleCondition onConsumedCondition) {
+			this.onConsumedCondition = onConsumedCondition;
 		}
 
 		@Override
-		public void run() {
+		public void beforeGeneration(final int eventNumber) {
+			if (eventNumber > 0) {
+				try {
+					this.onConsumedCondition.await();
+				} catch (final InterruptedException e) {
+					throw new RuntimeException(e);
+				}
+			}
+
+			// Wait an additional grace, should also switch the thread to active
 			final long pauseStart = System.nanoTime();
-			while (this.waitPeriodBetweenEvents > (System.nanoTime() - pauseStart)) {
+			while (WAIT_PERIOD_BETWEEN_EVENTS > (System.nanoTime() - pauseStart)) {
 				// busy spin
 			}
 		}
-
 	}
 
 	public Producer(final RingBuffer<BenchmarkEvent> ringBuffer, final String[] topics, final int eventCount,
-			final Runnable runBetweenEvents) {
+			final ForEachEvent runBetweenEvents) {
 		this.ringBuffer = ringBuffer;
 		this.topics = topics;
 		this.eventCount = eventCount;
@@ -54,7 +68,7 @@ public class Producer {
 		BenchmarkEvent event = null;
 
 		for (int eventNumber = 0; eventNumber < this.eventCount; eventNumber++) {
-			this.runBetweenEvents.run();
+			this.runBetweenEvents.beforeGeneration(eventNumber);
 
 			event = this.ringBuffer.get(availableSequence);
 

@@ -17,6 +17,7 @@ import org.neverfear.disruptor.perf.handler.MergeEventHandler;
 import org.neverfear.disruptor.perf.handler.NoMergingEventHandler;
 import org.neverfear.disruptor.perf.handler.TicketMergingEventHandler;
 import org.neverfear.disruptor.perf.producer.Producer;
+import org.neverfear.disruptor.perf.producer.Producer.ForEachEvent;
 import org.neverfear.disruptor.perf.producer.TicketMergingProducer;
 import org.neverfear.disruptor.perf.task.MeasureLatencyTask;
 import org.neverfear.disruptor.perf.task.MeasureThroughputTask;
@@ -30,7 +31,6 @@ public final class Benchmark {
 	public static final String[] TOPICS = new String[] { "Red", "Green", "Blue", "Yellow", "White" };
 	public static final MergeStrategy<BenchmarkEvent> MERGE_STRATEGY = new BenchmarkAfterQueueDrainedMergeStrategy(
 			TOPICS.length);
-	private static final long LATENCY_PAUSE_BETWEEN_EVENTS = 5000;
 
 	private static final int TEST_PAUSE_MILLIS = 5;
 	private static final int BUFFER_SIZE = 0x200000;
@@ -60,15 +60,16 @@ public final class Benchmark {
 			final Disruptor<BenchmarkEvent> disruptor = new Disruptor<>(BenchmarkEvent.FACTORY, executor,
 					new SingleThreadedClaimStrategy(BUFFER_SIZE), new PeakWaitStrategy(new BusySpinWaitStrategy()));
 
-			Runnable runBetweenEvents;
+			ForEachEvent runBetweenEvents;
 			final Task task;
 			switch (testType) {
 			case latency:
-				task = new MeasureLatencyTask();
-				runBetweenEvents = new Producer.BusySpinSleepRunnable(LATENCY_PAUSE_BETWEEN_EVENTS);
+				final SingleCondition onConsumedCondition = new SingleCondition();
+				task = new MeasureLatencyTask(onConsumedCondition);
+				runBetweenEvents = new Producer.WaitUntilConsumedRunnable(onConsumedCondition);
 				break;
 			case throughput:
-				task = new MeasureThroughputTask(eventCount);
+				task = new MeasureThroughputTask();
 				runBetweenEvents = new Producer.NoOpRunnable();
 				break;
 			default:

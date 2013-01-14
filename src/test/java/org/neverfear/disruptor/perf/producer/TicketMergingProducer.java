@@ -12,7 +12,7 @@ public class TicketMergingProducer extends Producer {
 	private final ConcurrentMap<Object, Payload> data;
 
 	public TicketMergingProducer(final RingBuffer<BenchmarkEvent> ringBuffer, final String[] topics,
-			final int eventCount, final Runnable runBetweenEvents, final ConcurrentMap<Object, Payload> data) {
+			final int eventCount, final ForEachEvent runBetweenEvents, final ConcurrentMap<Object, Payload> data) {
 		super(ringBuffer, topics, eventCount, runBetweenEvents);
 		this.data = data;
 	}
