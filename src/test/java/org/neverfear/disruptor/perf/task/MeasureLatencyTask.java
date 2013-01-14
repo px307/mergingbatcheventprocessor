@@ -60,9 +60,9 @@ public final class MeasureLatencyTask implements Task {
 	public void printResults(final PrintStream out) {
 		final Results stats = StatisticsCalculator.calcStats(listOfLongToArrayOfLong(this.latencies),
 				getExecutionCount());
-		out.format("Count:% ,8d |", stats.count);
-		out.format(" Min:% ,8d |", stats.min);
-		out.format(" Max:% ,8d |", stats.max);
+		out.format("Count:% ,10d |", stats.count);
+		out.format(" Min:% ,12d |", stats.min);
+		out.format(" Max:% ,12d |", stats.max);
 		out.format(" Average (Mean):%12s |", DOUBLE_FORMAT.format(stats.mean));
 		out.format(" Standard Deviation:%12s", DOUBLE_FORMAT.format(stats.sd));
 		out.println();
