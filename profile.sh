@@ -1,6 +1,6 @@
 #!/bin/bash
 
-runCount=10
+runCount=20
 eventCount=10000
 for benchmarkType in latency throughput; do 
 	for processorType in merge linked ticket none; do
