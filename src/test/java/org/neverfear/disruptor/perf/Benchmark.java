@@ -69,7 +69,7 @@ public final class Benchmark {
 				runBetweenEvents = new Producer.WaitUntilConsumedRunnable(onConsumedCondition);
 				break;
 			case throughput:
-				task = new MeasureThroughputTask();
+				task = new MeasureThroughputTask(eventCount);
 				runBetweenEvents = new Producer.NoOpRunnable();
 				break;
 			default:

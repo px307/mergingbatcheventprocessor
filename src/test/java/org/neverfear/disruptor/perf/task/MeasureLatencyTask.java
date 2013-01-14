@@ -1,10 +1,10 @@
 package org.neverfear.disruptor.perf.task;
 
 import java.io.PrintStream;
+import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.neverfear.disruptor.perf.ConsumedCondition;
 import org.neverfear.disruptor.perf.event.BenchmarkEvent.Payload;
@@ -17,6 +17,7 @@ import org.neverfear.disruptor.perf.task.StatisticsCalculator.Results;
  *            The event type that must be an {@link TimestampedEvent}
  */
 public final class MeasureLatencyTask implements Task {
+	private static final DecimalFormat DOUBLE_FORMAT = new DecimalFormat("#####.0000");
 	private final List<Long> latencies;
 	private final ConsumedCondition onConsumedCondition;
 
@@ -59,12 +60,11 @@ public final class MeasureLatencyTask implements Task {
 	public void printResults(final PrintStream out) {
 		final Results stats = StatisticsCalculator.calcStats(listOfLongToArrayOfLong(this.latencies),
 				getExecutionCount());
-		out.format("Latency statistics: ");
-		out.format(" Count:% -8d", stats.count);
-		out.format(" Min:% -8d", stats.min);
-		out.format(" Max:% -8d", stats.max);
-		out.format(" Average (Mean):%.10f", stats.mean, TimeUnit.NANOSECONDS.toMicros((long) stats.mean));
-		out.format(" Standard Deviation:%.10f", stats.sd);
+		out.format("Count:% ,8d |", stats.count);
+		out.format(" Min:% ,8d |", stats.min);
+		out.format(" Max:% ,8d |", stats.max);
+		out.format(" Average (Mean):%12s |", DOUBLE_FORMAT.format(stats.mean));
+		out.format(" Standard Deviation:%12s", DOUBLE_FORMAT.format(stats.sd));
 		out.println();
 	}
 
