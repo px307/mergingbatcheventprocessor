@@ -20,7 +20,7 @@ public class TicketMergingProducer extends Producer {
 	@Override
 	protected boolean shouldPublish(final BenchmarkEvent event) throws Exception {
 		final Payload previousValue = this.data.put(event.topic, event.payload);
-		return previousValue == null;
+		return previousValue == null || event.payload.lastEvent;
 	}
 
 }
