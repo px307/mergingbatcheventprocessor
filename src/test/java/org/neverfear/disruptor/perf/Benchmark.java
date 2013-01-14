@@ -64,7 +64,7 @@ public final class Benchmark {
 			final Task task;
 			switch (testType) {
 			case latency:
-				final SingleCondition onConsumedCondition = new SingleCondition();
+				final ConsumedCondition onConsumedCondition = new ConsumedCondition();
 				task = new MeasureLatencyTask(onConsumedCondition);
 				runBetweenEvents = new Producer.WaitUntilConsumedRunnable(onConsumedCondition);
 				break;

@@ -1,6 +1,6 @@
 package org.neverfear.disruptor.perf.producer;
 
-import org.neverfear.disruptor.perf.SingleCondition;
+import org.neverfear.disruptor.perf.ConsumedCondition;
 import org.neverfear.disruptor.perf.event.BenchmarkEvent;
 
 import com.lmax.disruptor.RingBuffer;
@@ -30,9 +30,9 @@ public class Producer {
 
 	public static final class WaitUntilConsumedRunnable implements ForEachEvent {
 		private static final long WAIT_PERIOD_BETWEEN_EVENTS = 1000;
-		private final SingleCondition onConsumedCondition;
+		private final ConsumedCondition onConsumedCondition;
 
-		public WaitUntilConsumedRunnable(final SingleCondition onConsumedCondition) {
+		public WaitUntilConsumedRunnable(final ConsumedCondition onConsumedCondition) {
 			this.onConsumedCondition = onConsumedCondition;
 		}
 
@@ -40,7 +40,7 @@ public class Producer {
 		public void beforeGeneration(final int eventNumber) {
 			if (eventNumber > 0) {
 				try {
-					this.onConsumedCondition.await();
+					this.onConsumedCondition.awaitConsumed();
 				} catch (final InterruptedException e) {
 					throw new RuntimeException(e);
 				}
