@@ -5,6 +5,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.Timeout;
@@ -41,7 +42,7 @@ public abstract class AbstractTest {
 	 * The timeout for this test case
 	 */
 	@Rule
-	public final Timeout timeout = new Timeout((int) TimeUnit.SECONDS.toMillis(10));
+	public final Timeout timeout = new Timeout((int) TimeUnit.SECONDS.toMillis(60));
 
 	/**
 	 * The exception rule for each method. This defaults to no exception. Test methods make set up their own assertions.
@@ -52,24 +53,30 @@ public abstract class AbstractTest {
 	/**
 	 * Executor provided for utility
 	 */
-	protected final ExecutorService executor = Executors.newCachedThreadPool();
+	protected ExecutorService executor;
 
 	/**
 	 * The mocked sequence barrier
 	 */
-	protected final SequenceBarrier sequenceBarrier = Mockito.mock(SequenceBarrier.class);
+	protected SequenceBarrier sequenceBarrier;
 
 	/**
 	 * Constructor
 	 */
 	public AbstractTest() {
-		logger.debug("Constructed");
+		this.logger.debug("Constructed");
+	}
+
+	@Before
+	public void setUpAbstractTest() throws Exception {
+		this.executor = Executors.newCachedThreadPool();
+		this.sequenceBarrier = Mockito.mock(SequenceBarrier.class);
 	}
 
 	@After
 	public void tearDownAbstractTest() throws Exception {
-		executor.shutdown();
-		executor.awaitTermination(10, TimeUnit.SECONDS);
+		this.executor.shutdown();
+		this.executor.awaitTermination(60, TimeUnit.SECONDS);
 	}
 
 	/**
@@ -141,17 +148,23 @@ public abstract class AbstractTest {
 
 	protected final MergedEventHandler<TestEvent> createMergedEventHandler(final LifecycleAware lifeCycleAware,
 			final TestEvent[] expectedEvents) {
+
 		return new TestEventHandler(lifeCycleAware, expectedEvents);
+
 	}
 
 	protected final MergingBatchEventProcessor<TestEvent> createProcessor(final TestEvent[] inputEvents,
 			final TestEvent[] expectedOutputEvents, final SequenceBarrier sequenceBarrier,
 			final AdvanceSequence whenToAdvanceSequence, final boolean copyEvent, final LifecycleAware lifeCycleAware,
 			final ExceptionHandler exceptionHandler) {
+
 		final RingBuffer<TestEvent> ringBuffer = createRingBuffer(inputEvents);
+
 		final MergedEventHandler<TestEvent> eventHandler = createMergedEventHandler(lifeCycleAware,
 				expectedOutputEvents);
+
 		final MergeStrategy<TestEvent> mergeStrategy = createMergeStrategy(whenToAdvanceSequence, copyEvent);
+
 		final MergingBatchEventProcessor<TestEvent> processor = new MergingBatchEventProcessor<>(ringBuffer,
 				sequenceBarrier, eventHandler, mergeStrategy);
 		processor.setExceptionHandler(exceptionHandler);

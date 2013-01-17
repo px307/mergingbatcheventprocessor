@@ -1,5 +1,6 @@
 package org.neverfear.disruptor.test;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 
 import junit.framework.Assert;
@@ -7,6 +8,8 @@ import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.neverfear.disruptor.MergeStrategy.AdvanceSequence;
 import org.neverfear.disruptor.MergingBatchEventProcessor;
 import org.neverfear.disruptor.test.exception.TestSuccessfulException;
@@ -33,37 +36,57 @@ public class MergingBatchProcessorTest extends AbstractTest {
 
 	@After
 	public void tearDown() throws Exception {
-		if (blockingLifecycle != null) {
-			blockingLifecycle.unblockStart();
-			blockingLifecycle.unblockShutdown();
+		if (this.blockingLifecycle != null) {
+			this.blockingLifecycle.unblockStart();
+			this.blockingLifecycle.unblockShutdown();
 		}
 	}
 
 	@Test
 	public void testCannotRunTwice() throws Exception {
-		exception.expect(IllegalStateException.class);
+		this.exception.expect(IllegalStateException.class);
 
 		/*
 		 * Script
 		 */
 		final TestEvent[] expectedEvents = new TestEvent[] {};
+		final CountDownLatch latch = new CountDownLatch(0);
+
+		// This mock behaviour is to shut down the spawned processor cleanly
+		Mockito.when(this.sequenceBarrier.waitFor(0)).then(new Answer<Long>() {
+
+			@Override
+			public Long answer(final InvocationOnMock invocation) throws Throwable {
+				latch.await();
+				throw AlertException.INSTANCE;
+			}
+		});
 
 		/*
 		 * Execute
 		 */
 		final MergingBatchEventProcessor<TestEvent> processor = createProcessor(expectedEvents, expectedEvents,
-				sequenceBarrier, AdvanceSequence.AFTER_MERGE, true, blockingLifecycle,
+				this.sequenceBarrier, AdvanceSequence.AFTER_MERGE, true, this.blockingLifecycle,
 				RethrowingExceptionHandler.INSTANCE);
 
-		executor.execute(processor);
-		blockingLifecycle.waitForStart();
+		this.executor.execute(processor);
 
-		processor.run();
+		// Used to ensure the executor runs first
+		this.blockingLifecycle.waitForStart();
+
+		try {
+			processor.run();
+		} finally {
+			// Shut down the spawned processor cleanly
+			processor.halt();
+			latch.countDown();
+		}
+
 	}
 
 	@Test
 	public void testCannotSetNullExceptionHandler() throws Exception {
-		exception.expect(NullPointerException.class);
+		this.exception.expect(NullPointerException.class);
 
 		/*
 		 * Script
@@ -73,8 +96,8 @@ public class MergingBatchProcessorTest extends AbstractTest {
 		/*
 		 * Execute
 		 */
-		createProcessor(expectedEvents, expectedEvents, sequenceBarrier, AdvanceSequence.AFTER_MERGE, true,
-				blockingLifecycle, null);
+		createProcessor(expectedEvents, expectedEvents, this.sequenceBarrier, AdvanceSequence.AFTER_MERGE, true,
+				this.blockingLifecycle, null);
 	}
 
 	@Test
@@ -83,28 +106,28 @@ public class MergingBatchProcessorTest extends AbstractTest {
 		 * Script
 		 */
 		final TestEvent[] expectedEvents = new TestEvent[] {};
-		Mockito.when(sequenceBarrier.waitFor(0)).thenThrow(AlertException.INSTANCE);
+		Mockito.when(this.sequenceBarrier.waitFor(0)).thenThrow(AlertException.INSTANCE);
 
 		/*
 		 * Execute
 		 */
 		final MergingBatchEventProcessor<TestEvent> processor = createProcessor(expectedEvents, expectedEvents,
-				sequenceBarrier, AdvanceSequence.AFTER_MERGE, true, blockingLifecycle,
+				this.sequenceBarrier, AdvanceSequence.AFTER_MERGE, true, this.blockingLifecycle,
 				RethrowingExceptionHandler.INSTANCE);
 
-		final Future<?> runFuture = executor.submit(processor);
-		blockingLifecycle.waitForStart();
+		final Future<?> runFuture = this.executor.submit(processor);
+		this.blockingLifecycle.waitForStart();
 
 		processor.halt();
 
-		blockingLifecycle.unblockStart();
-		blockingLifecycle.unblockShutdown();
+		this.blockingLifecycle.unblockStart();
+		this.blockingLifecycle.unblockShutdown();
 		runFuture.get();
 
 		/*
 		 * Assertions
 		 */
-		Mockito.verify(sequenceBarrier).alert();
+		Mockito.verify(this.sequenceBarrier).alert();
 	}
 
 	@Test
@@ -117,40 +140,41 @@ public class MergingBatchProcessorTest extends AbstractTest {
 				new TestEvent("PIE", 8, "BEEF"), new TestEvent("TOAST", 3, "PEANUT BUTTER"),
 				new TestEvent("CAKE", 2, "CHOCOOLATE") };
 
-		Mockito.when(sequenceBarrier.waitFor(0)).thenReturn(0l);
-		Mockito.when(sequenceBarrier.waitFor(1)).thenReturn(1l);
-		Mockito.when(sequenceBarrier.waitFor(2)).thenReturn(2l);
-		Mockito.when(sequenceBarrier.waitFor(3)).thenReturn(3l);
+		Mockito.when(this.sequenceBarrier.waitFor(0)).thenReturn(0l);
+		Mockito.when(this.sequenceBarrier.waitFor(1)).thenReturn(1l);
+		Mockito.when(this.sequenceBarrier.waitFor(2)).thenReturn(2l);
+		Mockito.when(this.sequenceBarrier.waitFor(3)).thenReturn(3l);
 
 		/*
 		 * Execute
 		 */
-		executeTest(expectedEvents, expectedEvents, sequenceBarrier, AdvanceSequence.AFTER_MERGE, true, happyLifecycle);
+		executeTest(expectedEvents, expectedEvents, this.sequenceBarrier, AdvanceSequence.AFTER_MERGE, true,
+				this.happyLifecycle);
 
 		/*
 		 * Assertions
 		 */
-		Mockito.verify(sequenceBarrier, Mockito.never()).waitFor(4);
+		Mockito.verify(this.sequenceBarrier, Mockito.never()).waitFor(4);
 	}
 
 	@Test
 	public void testCopyWhenAdvanceSequenceAfterMerge() throws Throwable {
 		// This test should fail before here
-		exception.expect(AssertionError.class);
+		this.exception.expect(AssertionError.class);
 
 		/*
 		 * Script
 		 */
 		final TestEvent[] expectedEvents = new TestEvent[] { new TestEvent("TOAST", 2, "JAM") };
 
-		Mockito.when(sequenceBarrier.waitFor(0)).thenReturn(0l);
+		Mockito.when(this.sequenceBarrier.waitFor(0)).thenReturn(0l);
 
 		/*
 		 * Execute
 		 */
 		try {
-			executeTest(expectedEvents, expectedEvents, sequenceBarrier, AdvanceSequence.AFTER_MERGE, false,
-					happyLifecycle);
+			executeTest(expectedEvents, expectedEvents, this.sequenceBarrier, AdvanceSequence.AFTER_MERGE, false,
+					this.happyLifecycle);
 		} catch (final Throwable e) {
 			throw e.getCause(); // Assertion error
 		}
@@ -171,19 +195,20 @@ public class MergingBatchProcessorTest extends AbstractTest {
 				new TestEvent("PIE", 8, "BEEF"), new TestEvent("TOAST", 3, "PEANUT BUTTER"),
 				new TestEvent("CAKE", 2, "CHOCOOLATE") };
 
-		Mockito.when(sequenceBarrier.waitFor(0)).thenReturn(0l);
-		Mockito.when(sequenceBarrier.waitFor(1)).thenReturn(2l);
-		Mockito.when(sequenceBarrier.waitFor(2)).thenReturn(3l);
+		Mockito.when(this.sequenceBarrier.waitFor(0)).thenReturn(0l);
+		Mockito.when(this.sequenceBarrier.waitFor(1)).thenReturn(2l);
+		Mockito.when(this.sequenceBarrier.waitFor(2)).thenReturn(3l);
 
 		/*
 		 * Execute
 		 */
-		executeTest(expectedEvents, expectedEvents, sequenceBarrier, AdvanceSequence.AFTER_MERGE, true, happyLifecycle);
+		executeTest(expectedEvents, expectedEvents, this.sequenceBarrier, AdvanceSequence.AFTER_MERGE, true,
+				this.happyLifecycle);
 
 		/*
 		 * Assertions
 		 */
-		Mockito.verify(sequenceBarrier, Mockito.never()).waitFor(3);
+		Mockito.verify(this.sequenceBarrier, Mockito.never()).waitFor(3);
 	}
 
 	@Test
@@ -199,19 +224,19 @@ public class MergingBatchProcessorTest extends AbstractTest {
 		final TestEvent[] expectedOutputEvents = new TestEvent[] { new TestEvent("TOAST", 3, "PEANUT BUTTER"),
 				new TestEvent("PIE", 8, "BEEF"), new TestEvent("CAKE", 2, "CHOCOOLATE") };
 
-		Mockito.when(sequenceBarrier.waitFor(0)).thenReturn(2l);
-		Mockito.when(sequenceBarrier.waitFor(1)).thenReturn(3l);
+		Mockito.when(this.sequenceBarrier.waitFor(0)).thenReturn(2l);
+		Mockito.when(this.sequenceBarrier.waitFor(1)).thenReturn(3l);
 
 		/*
 		 * Execute
 		 */
-		executeTest(inputEvents, expectedOutputEvents, sequenceBarrier, AdvanceSequence.AFTER_MERGE, true,
-				happyLifecycle);
+		executeTest(inputEvents, expectedOutputEvents, this.sequenceBarrier, AdvanceSequence.AFTER_MERGE, true,
+				this.happyLifecycle);
 
 		/*
 		 * Assertions
 		 */
-		Mockito.verify(sequenceBarrier, Mockito.never()).waitFor(2);
+		Mockito.verify(this.sequenceBarrier, Mockito.never()).waitFor(2);
 	}
 
 	private void executeTest(final TestEvent[] inputEvents, final TestEvent[] expectedOutputEvents,
@@ -229,6 +254,7 @@ public class MergingBatchProcessorTest extends AbstractTest {
 		} catch (final Throwable t) {
 			System.out.println("TEST FAILED!");
 			t.printStackTrace();
+			Assert.fail();
 			throw t;
 		}
 		System.out.println();
