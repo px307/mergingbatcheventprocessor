@@ -252,11 +252,6 @@ public class MergingBatchProcessorTest extends AbstractTest {
 			processor.run();
 		} catch (final TestSuccessfulException e) {
 			System.out.println("TEST WAS SUCCESSFUL");
-		} catch (final Throwable t) {
-			System.out.println("TEST FAILED!");
-			t.printStackTrace();
-			Assert.fail();
-			throw t;
 		}
 		System.out.println();
 	}
