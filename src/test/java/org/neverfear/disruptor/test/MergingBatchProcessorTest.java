@@ -176,6 +176,7 @@ public class MergingBatchProcessorTest extends AbstractTest {
 			executeTest(expectedEvents, expectedEvents, this.sequenceBarrier, AdvanceSequence.AFTER_MERGE, false,
 					this.happyLifecycle);
 		} catch (final Throwable e) {
+			Assert.assertNotNull(e.getCause());
 			throw e.getCause(); // Assertion error
 		}
 
