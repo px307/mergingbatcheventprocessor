@@ -64,7 +64,7 @@ public final class MeasureThroughputTask implements Task {
 		final double averageTimePerPublishedEvent = timeElapsed / (double) this.publishedEventCount;
 		final long publishOperationsPerSecond = (long) (ONE_SECOND_IN_NANOS / averageTimePerPublishedEvent);
 
-		out.format("Count:% ,10d |", getExecutionCount());
+		out.format("Count:% ,12d |", getExecutionCount());
 		out.format(" Elapsed:% ,16d |", timeElapsed, TimeUnit.NANOSECONDS.toMillis(timeElapsed));
 
 		out.format(" Consumption/Sec:% ,12d |", consumeOperationsPerSecond);
