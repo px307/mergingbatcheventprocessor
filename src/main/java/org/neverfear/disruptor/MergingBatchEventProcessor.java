@@ -114,10 +114,11 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 		final AdvanceSequence whenToAdvanceSequence = this.mergeStrategy.whenToAdvanceSequence();
 		final SequenceAdvanceStrategy advanceStrategy = createAdvanceStrategy(whenToAdvanceSequence);
 
-		final LinkedHashMap<Object, E> queue = new LinkedHashMap<Object, E>(
-				this.mergeStrategy.estimatedKeySpace());
+		final LinkedHashMap<Object, E> eventMap = new LinkedHashMap<Object, E>(this.mergeStrategy.estimatedKeySpace());
 
-		Iterator<E> mergeIterator = queue.values().iterator();
+		// final RingBufferQueue<E> eventQueue = new RingBufferQueue<>(this.mergeStrategy.estimatedKeySpace());
+
+		Iterator<E> mergeIterator = eventMap.values().iterator();
 
 		// Now for the real work
 		while (true) {
@@ -126,7 +127,7 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 				 * Get the next available sequence
 				 */
 				final long availableSequence;
-				if (queue.isEmpty()) {
+				if (eventMap.isEmpty()) {
 					availableSequence = this.sequenceBarrier.waitFor(nextSequence);
 				} else {
 					// Take a peak for a new element
@@ -148,22 +149,24 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 					 * and compare mutable fields by reference.
 					 */
 					assert (whenToAdvanceSequence == AdvanceSequence.AFTER_MERGE && mergeEvent != event)
-					|| (whenToAdvanceSequence != AdvanceSequence.AFTER_MERGE);
-					queue.put(key, mergeEvent);
+							|| (whenToAdvanceSequence != AdvanceSequence.AFTER_MERGE);
+					eventMap.put(key, mergeEvent);
+					// eventQueue.enqueue(mergeEvent);
 
 					nextSequence++;
 				}
 
 				// Since we've modified the collection we need a fresh iterator
-				mergeIterator = queue.values().iterator();
+				mergeIterator = eventMap.values().iterator();
 
 				final E oldestEvent = mergeIterator.next();
 				mergeIterator.remove();
+				// final E oldestEvent = eventMap.remove(this.mergeStrategy.getMergeKey(eventQueue.dequeue()));
 
 				event = oldestEvent;
 				this.eventHandler.onMergedEvent(oldestEvent);
 
-				advanceStrategy.advance(this.sequence, nextSequence, queue);
+				advanceStrategy.advance(this.sequence, nextSequence, eventMap);
 
 			} catch (final AlertException ex) {
 				if (!this.running.get()) {
@@ -192,7 +195,6 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 					: "null");
 		}
 	}
-
 
 	/**
 	 * Utility method. Notifies the handler of processor start
