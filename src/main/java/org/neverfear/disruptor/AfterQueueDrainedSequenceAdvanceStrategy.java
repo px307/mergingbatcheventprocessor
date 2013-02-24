@@ -1,7 +1,6 @@
 package org.neverfear.disruptor;
 
-import java.util.LinkedHashMap;
-
+import com.carrotsearch.hppc.ObjectObjectMap;
 import com.lmax.disruptor.Sequence;
 
 /**
@@ -14,8 +13,8 @@ public final class AfterQueueDrainedSequenceAdvanceStrategy implements SequenceA
 
 	@Override
 	public void advance(final Sequence fromSequence, final long nextSequence,
-			final LinkedHashMap<Object, ?> mergingQueue) {
-		if (mergingQueue.isEmpty()) {
+			final int queueSize) {
+		if (queueSize == 0) {
 			fromSequence.set(nextSequence - 1L);
 		}
 	}

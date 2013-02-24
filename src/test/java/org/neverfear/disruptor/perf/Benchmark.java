@@ -118,8 +118,9 @@ public final class Benchmark {
 			System.out.format("#% 4d ", run);
 			task.printResults(System.out);
 
-			Thread.sleep(TEST_PAUSE_MILLIS);
 			System.gc();
+			Thread.sleep(TEST_PAUSE_MILLIS);
+			
 			executor.shutdown();
 			if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
 				throw new TimeoutException("Executor did not shut down");

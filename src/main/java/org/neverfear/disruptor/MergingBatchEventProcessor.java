@@ -1,12 +1,14 @@
 package org.neverfear.disruptor;
 
-import java.util.Iterator;
-import java.util.LinkedHashMap;
+import java.util.ArrayDeque;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.neverfear.disruptor.MergeStrategy.AdvanceSequence;
 
+import com.carrotsearch.hppc.ObjectObjectMap;
+import com.carrotsearch.hppc.ObjectObjectOpenHashMap;
 import com.lmax.disruptor.AlertException;
 import com.lmax.disruptor.BatchEventProcessor;
 import com.lmax.disruptor.EventProcessor;
@@ -114,15 +116,17 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 		final AdvanceSequence whenToAdvanceSequence = this.mergeStrategy.whenToAdvanceSequence();
 		final SequenceAdvanceStrategy advanceStrategy = createAdvanceStrategy(whenToAdvanceSequence);
 
-		final LinkedHashMap<Object, E> eventMap = new LinkedHashMap<Object, E>(this.mergeStrategy.estimatedKeySpace());
 
-		// final RingBufferQueue<E> eventQueue = new RingBufferQueue<>(this.mergeStrategy.estimatedKeySpace());
-
-		Iterator<E> mergeIterator = eventMap.values().iterator();
+//		final Map<Object, E> eventMap = new HashMap<Object, E>(this.mergeStrategy.estimatedKeySpace());
+		final ObjectObjectMap<Object, E> eventMap = new ObjectObjectOpenHashMap<Object, E>(this.mergeStrategy.estimatedKeySpace());
+		
+		Queue<Object> keyQueue = new ArrayDeque<>(this.mergeStrategy.estimatedKeySpace());
 
 		// Now for the real work
 		while (true) {
 			try {
+				assert eventMap.size() == keyQueue.size() : "eventMap=" + eventMap + " keyQueue=" + keyQueue;
+				
 				/*
 				 * Get the next available sequence
 				 */
@@ -133,6 +137,7 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 					// Take a peak for a new element
 					availableSequence = this.sequenceBarrier.waitFor(nextSequence, 0, TimeUnit.NANOSECONDS);
 				}
+				
 
 				/*
 				 * For all available sequences merge into the merging queue
@@ -150,23 +155,24 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 					 */
 					assert (whenToAdvanceSequence == AdvanceSequence.AFTER_MERGE && mergeEvent != event)
 							|| (whenToAdvanceSequence != AdvanceSequence.AFTER_MERGE);
-					eventMap.put(key, mergeEvent);
-					// eventQueue.enqueue(mergeEvent);
 
+					if (eventMap.put(key, mergeEvent) == null) {
+						keyQueue.add(key);
+					}
+					
 					nextSequence++;
 				}
 
-				// Since we've modified the collection we need a fresh iterator
-				mergeIterator = eventMap.values().iterator();
-
-				final E oldestEvent = mergeIterator.next();
-				mergeIterator.remove();
-				// final E oldestEvent = eventMap.remove(this.mergeStrategy.getMergeKey(eventQueue.dequeue()));
+				/*
+				 * Remove the oldest element and advance the sequence
+				 */
+				Object oldestKey = keyQueue.remove();
+				E oldestEvent = eventMap.remove(oldestKey);
 
 				event = oldestEvent;
 				this.eventHandler.onMergedEvent(oldestEvent);
 
-				advanceStrategy.advance(this.sequence, nextSequence, eventMap);
+				advanceStrategy.advance(this.sequence, nextSequence, eventMap.size());
 
 			} catch (final AlertException ex) {
 				if (!this.running.get()) {

@@ -76,11 +76,10 @@ public class Producer {
 
 			event.topic = topic;
 			event.payload.identifier = eventNumber;
-			event.payload.publishedTimestamp = System.nanoTime();
 			event.payload.lastEvent = (eventNumber == this.lastEventSequenceNumber);
 
 			if (shouldPublish(event)) {
-
+				event.payload.publishedTimestamp = System.nanoTime();
 				this.ringBuffer.publish(availableSequence);
 				availableSequence = this.ringBuffer.next();
 			}
