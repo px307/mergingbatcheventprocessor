@@ -1,6 +1,5 @@
 package org.neverfear.disruptor;
 
-import com.carrotsearch.hppc.ObjectObjectMap;
 import com.lmax.disruptor.Sequence;
 
 /**
@@ -11,9 +10,13 @@ import com.lmax.disruptor.Sequence;
  */
 public final class AfterQueueDrainedSequenceAdvanceStrategy implements SequenceAdvanceStrategy {
 
+	public static final AfterQueueDrainedSequenceAdvanceStrategy INSTANCE = new AfterQueueDrainedSequenceAdvanceStrategy();
+
+	private AfterQueueDrainedSequenceAdvanceStrategy() {
+	}
+
 	@Override
-	public void advance(final Sequence fromSequence, final long nextSequence,
-			final int queueSize) {
+	public void advance(final Sequence fromSequence, final long nextSequence, final int queueSize) {
 		if (queueSize == 0) {
 			fromSequence.set(nextSequence - 1L);
 		}

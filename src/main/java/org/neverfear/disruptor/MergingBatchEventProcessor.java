@@ -193,9 +193,9 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 	private SequenceAdvanceStrategy createAdvanceStrategy(final AdvanceSequence whenToAdvanceSequence) {
 		switch (whenToAdvanceSequence) {
 		case WHEN_PROCESSED_ALL_MERGED_EVENTS:
-			return new AfterQueueDrainedSequenceAdvanceStrategy();
+			return AfterQueueDrainedSequenceAdvanceStrategy.INSTANCE;
 		case AFTER_MERGE:
-			return new AfterEveryBatchSequenceAdvanceStrategy();
+			return AfterEveryBatchSequenceAdvanceStrategy.INSTANCE;
 		default:
 			throw new IllegalArgumentException(whenToAdvanceSequence != null ? whenToAdvanceSequence.toString()
 					: "null");
