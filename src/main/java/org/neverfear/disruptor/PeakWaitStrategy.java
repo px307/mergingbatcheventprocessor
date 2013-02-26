@@ -18,6 +18,10 @@ public final class PeakWaitStrategy implements WaitStrategy {
 
 	private final WaitStrategy realStrategy;
 
+	/**
+	 * Constructs a peak wait strategy around a concrete strategy.
+	 * @param strategy
+	 */
 	public PeakWaitStrategy(final WaitStrategy strategy) {
 		this.realStrategy = strategy;
 	}
