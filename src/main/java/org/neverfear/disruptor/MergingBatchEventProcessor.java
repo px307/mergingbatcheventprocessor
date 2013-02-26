@@ -143,7 +143,6 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 					event = this.ringBuffer.get(nextSequence);
 
 					final Object key = this.mergeStrategy.getMergeKey(event);
-					final E mergeEvent = this.mergeStrategy.getMergeValue(event);
 
 					/*
 					 * This assertion is enforcing that if we are updating the sequence number after each batch then we
@@ -153,7 +152,7 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 //					assert (whenToAdvanceSequence == AdvanceSequence.AFTER_MERGE && mergeEvent != event)
 //							|| (whenToAdvanceSequence != AdvanceSequence.AFTER_MERGE);
 
-					if (eventMap.put(key, mergeEvent) == null) {
+					if (eventMap.put(key, event) == null) {
 						keyQueue.add(key);
 					}
 					
@@ -166,8 +165,8 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 				Object oldestKey = keyQueue.remove();
 				E oldestEvent = eventMap.remove(oldestKey);
 
-				event = oldestEvent;
-				this.eventHandler.onMergedEvent(oldestEvent);
+				event = this.mergeStrategy.getMergeValue(oldestEvent);
+				this.eventHandler.onMergedEvent(event);
 
 				if (advanceStrategy.shouldAdvance(eventMap.size())) {
 					sequence.set(nextSequence -1L);
