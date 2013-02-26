@@ -3,7 +3,10 @@ package org.neverfear.disruptor;
 import com.lmax.disruptor.Sequence;
 
 /**
- * Advances the sequence after every batch.
+ * Update the sequence number immediately after they've been merged. When using this you must copy the event when
+ * {@link MergeStrategy#getMergeValue(Object)} is called to prevent the trailing consumer modifying a used field.
+ * 
+ * When using this mode your consumer cannot mutate a merged event.
  * 
  * @author doug@neverfear.org
  * 

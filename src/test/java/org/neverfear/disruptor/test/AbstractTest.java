@@ -11,9 +11,9 @@ import org.junit.rules.ExpectedException;
 import org.junit.rules.Timeout;
 import org.mockito.Mockito;
 import org.neverfear.disruptor.MergeStrategy;
-import org.neverfear.disruptor.MergeStrategy.AdvanceSequence;
 import org.neverfear.disruptor.MergedEventHandler;
 import org.neverfear.disruptor.MergingBatchEventProcessor;
+import org.neverfear.disruptor.SequenceAdvanceStrategy;
 import org.neverfear.disruptor.test.exception.TestFailureException;
 import org.neverfear.disruptor.test.util.TestEvent;
 import org.neverfear.disruptor.test.util.TestEventHandler;
@@ -115,7 +115,7 @@ public abstract class AbstractTest {
 		return ringBuffer;
 	}
 
-	protected final MergeStrategy<TestEvent> createMergeStrategy(final AdvanceSequence whenToAdvanceSequence,
+	protected final MergeStrategy<TestEvent> createMergeStrategy(final SequenceAdvanceStrategy whenToAdvanceSequence,
 			final boolean createCopy) {
 		return new MergeStrategy<TestEvent>() {
 
@@ -134,7 +134,7 @@ public abstract class AbstractTest {
 			}
 
 			@Override
-			public AdvanceSequence whenToAdvanceSequence() {
+			public SequenceAdvanceStrategy whenToAdvanceSequence() {
 				return whenToAdvanceSequence;
 			}
 
@@ -155,7 +155,7 @@ public abstract class AbstractTest {
 
 	protected final MergingBatchEventProcessor<TestEvent> createProcessor(final TestEvent[] inputEvents,
 			final TestEvent[] expectedOutputEvents, final SequenceBarrier sequenceBarrier,
-			final AdvanceSequence whenToAdvanceSequence, final boolean copyEvent, final LifecycleAware lifeCycleAware,
+			final SequenceAdvanceStrategy whenToAdvanceSequence, final boolean copyEvent, final LifecycleAware lifeCycleAware,
 			final ExceptionHandler exceptionHandler) {
 
 		final RingBuffer<TestEvent> ringBuffer = createRingBuffer(inputEvents);

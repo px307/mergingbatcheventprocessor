@@ -1,7 +1,9 @@
 package org.neverfear.disruptor.perf;
 
+import org.neverfear.disruptor.AfterQueueDrainedSequenceAdvanceStrategy;
 import org.neverfear.disruptor.MergeStrategy;
 import org.neverfear.disruptor.MergingBatchEventProcessor;
+import org.neverfear.disruptor.SequenceAdvanceStrategy;
 import org.neverfear.disruptor.perf.event.BenchmarkEvent;
 
 /**
@@ -35,7 +37,7 @@ public class BenchmarkAfterQueueDrainedMergeStrategy implements MergeStrategy<Be
 	}
 
 	@Override
-	public MergeStrategy.AdvanceSequence whenToAdvanceSequence() {
-		return AdvanceSequence.WHEN_PROCESSED_ALL_MERGED_EVENTS;
+	public SequenceAdvanceStrategy whenToAdvanceSequence() {
+		return AfterQueueDrainedSequenceAdvanceStrategy.INSTANCE;
 	}
 }

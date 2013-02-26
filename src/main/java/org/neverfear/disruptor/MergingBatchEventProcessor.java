@@ -5,8 +5,6 @@ import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.neverfear.disruptor.MergeStrategy.AdvanceSequence;
-
 import com.carrotsearch.hppc.ObjectObjectMap;
 import com.carrotsearch.hppc.ObjectObjectOpenHashMap;
 import com.lmax.disruptor.AlertException;
@@ -113,8 +111,7 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 		E event = null;
 		long nextSequence = this.sequence.get() + 1L;
 
-		final AdvanceSequence whenToAdvanceSequence = this.mergeStrategy.whenToAdvanceSequence();
-		final SequenceAdvanceStrategy advanceStrategy = createAdvanceStrategy(whenToAdvanceSequence);
+		final SequenceAdvanceStrategy advanceStrategy = this.mergeStrategy.whenToAdvanceSequence();
 
 
 //		final Map<Object, E> eventMap = new HashMap<Object, E>(this.mergeStrategy.estimatedKeySpace());
@@ -153,8 +150,8 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 					 * *must* copy the event. This assertion isn't foolproof because it doesn't walk the reference tree
 					 * and compare mutable fields by reference.
 					 */
-					assert (whenToAdvanceSequence == AdvanceSequence.AFTER_MERGE && mergeEvent != event)
-							|| (whenToAdvanceSequence != AdvanceSequence.AFTER_MERGE);
+//					assert (whenToAdvanceSequence == AdvanceSequence.AFTER_MERGE && mergeEvent != event)
+//							|| (whenToAdvanceSequence != AdvanceSequence.AFTER_MERGE);
 
 					if (eventMap.put(key, mergeEvent) == null) {
 						keyQueue.add(key);
@@ -188,18 +185,6 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 		notifyShutdown();
 
 		this.running.set(false);
-	}
-
-	private SequenceAdvanceStrategy createAdvanceStrategy(final AdvanceSequence whenToAdvanceSequence) {
-		switch (whenToAdvanceSequence) {
-		case WHEN_PROCESSED_ALL_MERGED_EVENTS:
-			return AfterQueueDrainedSequenceAdvanceStrategy.INSTANCE;
-		case AFTER_MERGE:
-			return AfterEveryBatchSequenceAdvanceStrategy.INSTANCE;
-		default:
-			throw new IllegalArgumentException(whenToAdvanceSequence != null ? whenToAdvanceSequence.toString()
-					: "null");
-		}
 	}
 
 	/**
