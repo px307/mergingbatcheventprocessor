@@ -1,6 +1,5 @@
 package org.neverfear.disruptor;
 
-import com.lmax.disruptor.Sequence;
 
 /**
  * Update the sequence number immediately after they've been merged. When using this you must copy the event when
@@ -19,8 +18,8 @@ public final class AfterEveryBatchSequenceAdvanceStrategy implements SequenceAdv
 	}
 
 	@Override
-	public void advance(final Sequence fromSequence, final long nextSequence, final int queueSize) {
-		fromSequence.set(nextSequence);
+	public boolean shouldAdvance( final int queueSize) {
+		return true;
 	}
 
 }

@@ -1,6 +1,5 @@
 package org.neverfear.disruptor;
 
-import com.lmax.disruptor.Sequence;
 
 /**
  * Advance the sequence number when we have processed all available mergable events. Be warned if there are consumers
@@ -25,10 +24,8 @@ public final class AfterQueueDrainedSequenceAdvanceStrategy implements SequenceA
 	}
 
 	@Override
-	public void advance(final Sequence fromSequence, final long nextSequence, final int queueSize) {
-		if (queueSize == 0) {
-			fromSequence.set(nextSequence);
-		}
+	public boolean shouldAdvance(final int queueSize) {
+		return (queueSize == 0);
 	}
 
 }

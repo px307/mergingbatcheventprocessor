@@ -169,7 +169,9 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 				event = oldestEvent;
 				this.eventHandler.onMergedEvent(oldestEvent);
 
-				advanceStrategy.advance(this.sequence, nextSequence -1L, eventMap.size());
+				if (advanceStrategy.shouldAdvance(eventMap.size())) {
+					sequence.set(nextSequence -1L);
+				}
 
 			} catch (final AlertException ex) {
 				if (!this.running.get()) {
