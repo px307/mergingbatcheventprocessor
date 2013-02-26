@@ -27,7 +27,7 @@ public final class AfterQueueDrainedSequenceAdvanceStrategy implements SequenceA
 	@Override
 	public void advance(final Sequence fromSequence, final long nextSequence, final int queueSize) {
 		if (queueSize == 0) {
-			fromSequence.set(nextSequence - 1L);
+			fromSequence.set(nextSequence);
 		}
 	}
 

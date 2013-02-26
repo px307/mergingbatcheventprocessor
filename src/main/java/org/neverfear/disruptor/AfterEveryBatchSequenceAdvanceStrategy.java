@@ -20,7 +20,7 @@ public final class AfterEveryBatchSequenceAdvanceStrategy implements SequenceAdv
 
 	@Override
 	public void advance(final Sequence fromSequence, final long nextSequence, final int queueSize) {
-		fromSequence.set(nextSequence - 1L);
+		fromSequence.set(nextSequence);
 	}
 
 }
