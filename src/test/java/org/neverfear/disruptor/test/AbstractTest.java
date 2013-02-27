@@ -10,13 +10,9 @@ import org.junit.Rule;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.Timeout;
 import org.mockito.Mockito;
-import org.neverfear.disruptor.ByCopyAdvanceStrategy;
-import org.neverfear.disruptor.ByReferenceAdvanceStrategy;
-import org.neverfear.disruptor.EventCopier;
 import org.neverfear.disruptor.MergeStrategy;
 import org.neverfear.disruptor.MergedEventHandler;
 import org.neverfear.disruptor.MergingBatchEventProcessor;
-import org.neverfear.disruptor.SequenceStrategy;
 import org.neverfear.disruptor.test.exception.TestFailureException;
 import org.neverfear.disruptor.test.util.TestEvent;
 import org.neverfear.disruptor.test.util.TestEventHandler;
@@ -118,20 +114,6 @@ public abstract class AbstractTest {
 		return ringBuffer;
 	}
 
-	protected final SequenceStrategy<TestEvent> creatSequenceStrategy(final boolean createCopy) {
-		if (createCopy) {
-			return new ByCopyAdvanceStrategy<>(new EventCopier<TestEvent>() {
-
-				@Override
-				public TestEvent copy(TestEvent event) {
-					return TestEvent.copy(event);
-				}
-			});
-		} else {
-			return new ByReferenceAdvanceStrategy<>();
-		}
-	}
-
 	protected final MergeStrategy<TestEvent> createMergeStrategy() {
 		return new MergeStrategy<TestEvent>() {
 
@@ -156,7 +138,7 @@ public abstract class AbstractTest {
 	}
 
 	protected final MergingBatchEventProcessor<TestEvent> createProcessor(final TestEvent[] inputEvents,
-			final TestEvent[] expectedOutputEvents, final SequenceBarrier sequenceBarrier, final boolean copyEvent,
+			final TestEvent[] expectedOutputEvents, final SequenceBarrier sequenceBarrier,
 			final LifecycleAware lifeCycleAware, final ExceptionHandler exceptionHandler) {
 
 		final RingBuffer<TestEvent> ringBuffer = createRingBuffer(inputEvents);
@@ -164,11 +146,10 @@ public abstract class AbstractTest {
 		final MergedEventHandler<TestEvent> eventHandler = createMergedEventHandler(lifeCycleAware,
 				expectedOutputEvents);
 
-		SequenceStrategy<TestEvent> sequenceStrategy = creatSequenceStrategy(copyEvent);
 		final MergeStrategy<TestEvent> mergeStrategy = createMergeStrategy();
 
 		final MergingBatchEventProcessor<TestEvent> processor = new MergingBatchEventProcessor<>(ringBuffer,
-				sequenceBarrier, eventHandler, mergeStrategy, sequenceStrategy);
+				sequenceBarrier, eventHandler, mergeStrategy);
 		processor.setExceptionHandler(exceptionHandler);
 		return processor;
 	}

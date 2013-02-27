@@ -3,8 +3,6 @@ package org.neverfear.disruptor.test;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 
-import junit.framework.Assert;
-
 import org.junit.After;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -65,8 +63,7 @@ public class MergingBatchProcessorTest extends AbstractTest {
 		 * Execute
 		 */
 		final MergingBatchEventProcessor<TestEvent> processor = createProcessor(expectedEvents, expectedEvents,
-				this.sequenceBarrier, true, this.blockingLifecycle,
-				RethrowingExceptionHandler.INSTANCE);
+				this.sequenceBarrier, this.blockingLifecycle, RethrowingExceptionHandler.INSTANCE);
 
 		this.executor.execute(processor);
 
@@ -95,8 +92,7 @@ public class MergingBatchProcessorTest extends AbstractTest {
 		/*
 		 * Execute
 		 */
-		createProcessor(expectedEvents, expectedEvents, this.sequenceBarrier,  true,
-				this.blockingLifecycle, null);
+		createProcessor(expectedEvents, expectedEvents, this.sequenceBarrier, this.blockingLifecycle, null);
 	}
 
 	@Test
@@ -111,8 +107,7 @@ public class MergingBatchProcessorTest extends AbstractTest {
 		 * Execute
 		 */
 		final MergingBatchEventProcessor<TestEvent> processor = createProcessor(expectedEvents, expectedEvents,
-				this.sequenceBarrier,  true, this.blockingLifecycle,
-				RethrowingExceptionHandler.INSTANCE);
+				this.sequenceBarrier, this.blockingLifecycle, RethrowingExceptionHandler.INSTANCE);
 
 		final Future<?> runFuture = this.executor.submit(processor);
 		this.blockingLifecycle.waitForStart();
@@ -147,42 +142,12 @@ public class MergingBatchProcessorTest extends AbstractTest {
 		/*
 		 * Execute
 		 */
-		executeTest(expectedEvents, expectedEvents, this.sequenceBarrier,  true,
-				this.happyLifecycle);
+		executeTest(expectedEvents, expectedEvents, this.sequenceBarrier, this.happyLifecycle);
 
 		/*
 		 * Assertions
 		 */
 		Mockito.verify(this.sequenceBarrier, Mockito.never()).waitFor(4);
-	}
-
-	@Test
-	public void testCopyWhenAdvanceSequenceAfterMerge() throws Throwable {
-		// This test should fail before here
-		this.exception.expect(AssertionError.class);
-
-		/*
-		 * Script
-		 */
-		final TestEvent[] expectedEvents = new TestEvent[] { new TestEvent("TOAST", 2, "JAM") };
-
-		Mockito.when(this.sequenceBarrier.waitFor(0)).thenReturn(0l);
-
-		/*
-		 * Execute
-		 */
-		try {
-			executeTest(expectedEvents, expectedEvents, this.sequenceBarrier,  false,
-					this.happyLifecycle);
-		} catch (final Throwable e) {
-			Assert.assertNotNull(e.getCause());
-			throw e.getCause(); // Assertion error
-		}
-
-		/*
-		 * Assertions (should not get this far)
-		 */
-		Assert.fail("Expected assertion error");
 	}
 
 	@Test
@@ -202,8 +167,7 @@ public class MergingBatchProcessorTest extends AbstractTest {
 		/*
 		 * Execute
 		 */
-		executeTest(expectedEvents, expectedEvents, this.sequenceBarrier,  true,
-				this.happyLifecycle);
+		executeTest(expectedEvents, expectedEvents, this.sequenceBarrier, this.happyLifecycle);
 
 		/*
 		 * Assertions
@@ -230,8 +194,7 @@ public class MergingBatchProcessorTest extends AbstractTest {
 		/*
 		 * Execute
 		 */
-		executeTest(inputEvents, expectedOutputEvents, this.sequenceBarrier,  true,
-				this.happyLifecycle);
+		executeTest(inputEvents, expectedOutputEvents, this.sequenceBarrier, this.happyLifecycle);
 
 		/*
 		 * Assertions
@@ -240,13 +203,12 @@ public class MergingBatchProcessorTest extends AbstractTest {
 	}
 
 	private void executeTest(final TestEvent[] inputEvents, final TestEvent[] expectedOutputEvents,
-			final SequenceBarrier sequenceBarrier,
-			final boolean copyEvent, final LifecycleAware lifeCycleAware) {
+			final SequenceBarrier sequenceBarrier, final LifecycleAware lifeCycleAware) {
 
 		System.out.println("TEST STARTING");
 		System.out.println("-----------------------------------");
 		final MergingBatchEventProcessor<TestEvent> processor = createProcessor(inputEvents, expectedOutputEvents,
-				sequenceBarrier, copyEvent, lifeCycleAware, RethrowingExceptionHandler.INSTANCE);
+				sequenceBarrier, lifeCycleAware, RethrowingExceptionHandler.INSTANCE);
 		try {
 			processor.run();
 		} catch (final TestSuccessfulException e) {

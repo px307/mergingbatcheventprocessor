@@ -25,7 +25,7 @@ public class RethrowingExceptionHandlerTest extends AbstractTest {
 
 	@Before
 	public void setUp() throws Exception {
-		unhappyShutdownLifecycle = new UnhappyShutdownLifecycle();
+		this.unhappyShutdownLifecycle = new UnhappyShutdownLifecycle();
 	}
 
 	@After
@@ -34,29 +34,29 @@ public class RethrowingExceptionHandlerTest extends AbstractTest {
 
 	@Test
 	public void testStartException() throws Exception {
-		exception.expect(TestStartException.class);
+		this.exception.expect(TestStartException.class);
 
 		final TestEvent[] expectedEvents = new TestEvent[] { new TestEvent("TOAST", 2, "JAM"),
 				new TestEvent("PIE", 8, "BEEF"), new TestEvent("TOAST", 3, "PEANUT BUTTER"),
 				new TestEvent("CAKE", 2, "CHOCOOLATE") };
 
 		final MergingBatchEventProcessor<TestEvent> processor = createProcessor(expectedEvents, expectedEvents,
-				sequenceBarrier, true, UNHAPPY_START_LIFECYCLE, RethrowingExceptionHandler.INSTANCE);
+				this.sequenceBarrier, UNHAPPY_START_LIFECYCLE, RethrowingExceptionHandler.INSTANCE);
 
 		processor.run();
 	}
 
 	@Test
 	public void testShutdownException() throws Throwable {
-		exception.expect(TestShutdownException.class);
+		this.exception.expect(TestShutdownException.class);
 
 		final TestEvent[] expectedEvents = new TestEvent[] {};
-		Mockito.when(sequenceBarrier.waitFor(0)).thenThrow(AlertException.INSTANCE);
+		Mockito.when(this.sequenceBarrier.waitFor(0)).thenThrow(AlertException.INSTANCE);
 
 		final MergingBatchEventProcessor<TestEvent> processor = createProcessor(expectedEvents, expectedEvents,
-				sequenceBarrier, true, unhappyShutdownLifecycle, RethrowingExceptionHandler.INSTANCE);
+				this.sequenceBarrier, this.unhappyShutdownLifecycle, RethrowingExceptionHandler.INSTANCE);
 
-		final Future<Throwable> runFuture = executor.submit(new Callable<Throwable>() {
+		final Future<Throwable> runFuture = this.executor.submit(new Callable<Throwable>() {
 
 			@Override
 			public Throwable call() throws Exception {
@@ -68,15 +68,15 @@ public class RethrowingExceptionHandlerTest extends AbstractTest {
 				return null;
 			}
 		});
-		unhappyShutdownLifecycle.waitForStart();
+		this.unhappyShutdownLifecycle.waitForStart();
 
 		processor.halt();
-		Mockito.verify(sequenceBarrier).alert();
+		Mockito.verify(this.sequenceBarrier).alert();
 
-		unhappyShutdownLifecycle.unblockStart();
+		this.unhappyShutdownLifecycle.unblockStart();
 
-		unhappyShutdownLifecycle.waitForShutdown();
-		unhappyShutdownLifecycle.unblockShutdown();
+		this.unhappyShutdownLifecycle.waitForShutdown();
+		this.unhappyShutdownLifecycle.unblockShutdown();
 		throw runFuture.get();
 	}
 }

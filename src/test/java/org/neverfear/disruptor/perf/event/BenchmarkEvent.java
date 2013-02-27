@@ -1,8 +1,10 @@
 package org.neverfear.disruptor.perf.event;
 
+import org.neverfear.disruptor.AbstractMergeableEvent;
+
 import com.lmax.disruptor.EventFactory;
 
-public final class BenchmarkEvent {
+public final class BenchmarkEvent extends AbstractMergeableEvent {
 	public static final class Payload {
 		public int identifier = 0;
 		public long publishedTimestamp = 0;

@@ -27,17 +27,18 @@ import com.lmax.disruptor.Sequencer;
  *            event implementation storing the data for sharing during exchange or parallel coordination of an event. If
  *            this class implements {@link EventSequence} then the current sequence is updated on the event.
  */
-public final class MergingBatchEventProcessor<E> implements EventProcessor {
+public final class MergingBatchEventProcessor<E extends MergeableEvent> implements EventProcessor {
 	private final AtomicBoolean running = new AtomicBoolean(false);
-	private ExceptionHandler exceptionHandler = new FatalExceptionHandler();
+
 	private final RingBuffer<E> ringBuffer;
 	private final SequenceBarrier sequenceBarrier;
 	private final MergedEventHandler<E> eventHandler;
 
 	private final MergeStrategy<E> mergeStrategy;
-	private final SequenceStrategy<E> sequenceStrategy;
 
 	private final Sequence sequence = new Sequence(Sequencer.INITIAL_CURSOR_VALUE);
+
+	private ExceptionHandler exceptionHandler = new FatalExceptionHandler();
 
 	/**
 	 * Construct a {@link EventProcessor} that will automatically track the progress by updating its sequence when the
@@ -49,17 +50,15 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 	 *            on which it is waiting.
 	 * @param eventHandler
 	 *            is the delegate to which events are dispatched.
+	 * @param mergeStrategy
+	 *            The merge strategy to apply to each event
 	 */
-	public MergingBatchEventProcessor(final RingBuffer<E> ringBuffer, 
-			final SequenceBarrier sequenceBarrier,
-			final MergedEventHandler<E> eventHandler, 
-			final MergeStrategy<E> mergeStrategy,
-			final SequenceStrategy<E> sequenceStrategy) {
+	public MergingBatchEventProcessor(final RingBuffer<E> ringBuffer, final SequenceBarrier sequenceBarrier,
+			final MergedEventHandler<E> eventHandler, final MergeStrategy<E> mergeStrategy) {
 		this.ringBuffer = ringBuffer;
 		this.sequenceBarrier = sequenceBarrier;
 		this.eventHandler = eventHandler;
 		this.mergeStrategy = mergeStrategy;
-		this.sequenceStrategy = sequenceStrategy;
 	}
 
 	/*
@@ -114,7 +113,8 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 		E event = null;
 		long nextSequence = this.sequence.get() + 1L;
 
-		MergingQueue<Object, E> mergingQueue = new ArrayHashMapMergingQueue<>(mergeStrategy.estimatedKeySpace());
+		final MergingQueue<Object, E> mergingQueue = new ArrayHashMapMergingQueue<>(
+				this.mergeStrategy.estimatedKeySpace());
 
 		// Now for the real work
 		while (true) {
@@ -135,6 +135,7 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 				 */
 				while (nextSequence <= availableSequence) {
 					event = this.ringBuffer.get(nextSequence);
+					event.setSequence(nextSequence);
 
 					final Object key = this.mergeStrategy.getMergeKey(event);
 					mergingQueue.put(key, event);
@@ -144,17 +145,10 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 				/*
 				 * Remove the oldest element and advance the sequence
 				 */
-				E oldestEvent = mergingQueue.remove();
-				event = oldestEvent;
-
-				// Translate into the event we should pass to the handler
-				event = this.sequenceStrategy.getMergeValue(oldestEvent);
-
+				event = mergingQueue.remove();
 				this.eventHandler.onMergedEvent(event);
 
-				if (sequenceStrategy.shouldAdvance(mergingQueue.size())) {
-					sequence.set(nextSequence - 1L);
-				}
+				this.sequence.set(event.getSequence() - 1L);
 
 			} catch (final AlertException ex) {
 				if (!this.running.get()) {
