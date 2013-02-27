@@ -33,10 +33,10 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 	private final RingBuffer<E> ringBuffer;
 	private final SequenceBarrier sequenceBarrier;
 	private final MergedEventHandler<E> eventHandler;
-	
+
 	private final MergeStrategy<E> mergeStrategy;
 	private final SequenceStrategy<E> sequenceStrategy;
-	
+
 	private final Sequence sequence = new Sequence(Sequencer.INITIAL_CURSOR_VALUE);
 
 	/**
@@ -50,9 +50,11 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 	 * @param eventHandler
 	 *            is the delegate to which events are dispatched.
 	 */
-	public MergingBatchEventProcessor(final RingBuffer<E> ringBuffer, final SequenceBarrier sequenceBarrier,
+	public MergingBatchEventProcessor(final RingBuffer<E> ringBuffer, 
+			final SequenceBarrier sequenceBarrier,
 			final MergedEventHandler<E> eventHandler, 
-			final MergeStrategy<E> mergeStrategy, SequenceStrategy<E> sequenceStrategy) {
+			final MergeStrategy<E> mergeStrategy,
+			final SequenceStrategy<E> sequenceStrategy) {
 		this.ringBuffer = ringBuffer;
 		this.sequenceBarrier = sequenceBarrier;
 		this.eventHandler = eventHandler;
@@ -113,7 +115,7 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 		long nextSequence = this.sequence.get() + 1L;
 
 		MergingQueue<Object, E> mergingQueue = new ArrayHashMapMergingQueue<>(mergeStrategy.estimatedKeySpace());
-		
+
 		// Now for the real work
 		while (true) {
 			try {
@@ -127,7 +129,7 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 					// Take a peak for a new element
 					availableSequence = this.sequenceBarrier.waitFor(nextSequence, 0, TimeUnit.NANOSECONDS);
 				}
-				
+
 				/*
 				 * For all available sequences merge into the merging queue
 				 */
@@ -144,14 +146,14 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 				 */
 				E oldestEvent = mergingQueue.remove();
 				event = oldestEvent;
-				
+
 				// Translate into the event we should pass to the handler
 				event = this.sequenceStrategy.getMergeValue(oldestEvent);
-				
+
 				this.eventHandler.onMergedEvent(event);
 
 				if (sequenceStrategy.shouldAdvance(mergingQueue.size())) {
-					sequence.set(nextSequence -1L);
+					sequence.set(nextSequence - 1L);
 				}
 
 			} catch (final AlertException ex) {
