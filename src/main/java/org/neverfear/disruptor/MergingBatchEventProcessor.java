@@ -61,21 +61,11 @@ public final class MergingBatchEventProcessor<E extends MergeableEvent> implemen
 		this.mergeStrategy = mergeStrategy;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.lmax.disruptor.EventProcessor#getSequence()
-	 */
 	@Override
 	public Sequence getSequence() {
 		return this.sequence;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.lmax.disruptor.EventProcessor#halt()
-	 */
 	@Override
 	public void halt() {
 		this.running.set(false);
