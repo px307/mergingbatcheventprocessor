@@ -135,17 +135,7 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 					event = this.ringBuffer.get(nextSequence);
 
 					final Object key = this.mergeStrategy.getMergeKey(event);
-
-					/*
-					 * This assertion is enforcing that if we are updating the sequence number after each batch then we
-					 * *must* copy the event. This assertion isn't foolproof because it doesn't walk the reference tree
-					 * and compare mutable fields by reference.
-					 */
-//					assert (whenToAdvanceSequence == AdvanceSequence.AFTER_MERGE && mergeEvent != event)
-//							|| (whenToAdvanceSequence != AdvanceSequence.AFTER_MERGE);
-
 					mergingQueue.put(key, event);
-					
 					nextSequence++;
 				}
 
