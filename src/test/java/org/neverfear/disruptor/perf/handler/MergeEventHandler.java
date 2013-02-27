@@ -3,6 +3,7 @@ package org.neverfear.disruptor.perf.handler;
 import org.neverfear.disruptor.MergeStrategy;
 import org.neverfear.disruptor.MergedEventHandler;
 import org.neverfear.disruptor.MergingBatchEventProcessor;
+import org.neverfear.disruptor.SequenceStrategy;
 import org.neverfear.disruptor.perf.event.BenchmarkEvent;
 import org.neverfear.disruptor.perf.task.Task;
 
@@ -12,8 +13,12 @@ import com.lmax.disruptor.RingBuffer;
 public final class MergeEventHandler extends AbstractBenchmarkEventHandler implements
 		MergedEventHandler<BenchmarkEvent> {
 
-	public MergeEventHandler(final MergeStrategy<BenchmarkEvent> mergeStrategy, final Task task) {
+	private final SequenceStrategy<BenchmarkEvent> sequenceStrategy;
+
+	public MergeEventHandler(final MergeStrategy<BenchmarkEvent> mergeStrategy,
+			SequenceStrategy<BenchmarkEvent> sequenceStrategy, final Task task) {
 		super(mergeStrategy, task);
+		this.sequenceStrategy = sequenceStrategy;
 	}
 
 	@Override
@@ -27,6 +32,6 @@ public final class MergeEventHandler extends AbstractBenchmarkEventHandler imple
 	@Override
 	public EventProcessor createEventProcessor(final RingBuffer<BenchmarkEvent> ringBuffer) {
 		return new MergingBatchEventProcessor<BenchmarkEvent>(ringBuffer, ringBuffer.newBarrier(), this,
-				this.mergeStrategy);
+				this.mergeStrategy, sequenceStrategy);
 	}
 }

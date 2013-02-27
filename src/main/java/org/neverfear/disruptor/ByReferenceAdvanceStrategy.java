@@ -1,6 +1,5 @@
 package org.neverfear.disruptor;
 
-
 /**
  * Advance the sequence number when we have processed all available mergable events. Be warned if there are consumers
  * behind the merging batch processor then this has a risk of starvation. In this case the merging batch processor will
@@ -16,16 +15,16 @@ package org.neverfear.disruptor;
  * @author doug@neverfear.org
  * 
  */
-public final class AfterQueueDrainedSequenceAdvanceStrategy implements SequenceAdvanceStrategy {
+public final class ByReferenceAdvanceStrategy<E> implements SequenceStrategy<E> {
 
-	public static final AfterQueueDrainedSequenceAdvanceStrategy INSTANCE = new AfterQueueDrainedSequenceAdvanceStrategy();
-
-	private AfterQueueDrainedSequenceAdvanceStrategy() {
+	@Override
+	public final E getMergeValue(E event) {
+		return event;
 	}
 
 	@Override
-	public boolean shouldAdvance(final int queueSize) {
-		return (queueSize == 0);
+	public final boolean shouldAdvance(int queueSize) {
+		return queueSize == 0;
 	}
 
 }

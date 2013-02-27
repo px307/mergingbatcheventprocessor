@@ -7,7 +7,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.neverfear.disruptor.AfterEveryBatchSequenceAdvanceStrategy;
 import org.neverfear.disruptor.MergingBatchEventProcessor;
 import org.neverfear.disruptor.test.exception.TestShutdownException;
 import org.neverfear.disruptor.test.exception.TestStartException;
@@ -42,8 +41,7 @@ public class RethrowingExceptionHandlerTest extends AbstractTest {
 				new TestEvent("CAKE", 2, "CHOCOOLATE") };
 
 		final MergingBatchEventProcessor<TestEvent> processor = createProcessor(expectedEvents, expectedEvents,
-				sequenceBarrier,  AfterEveryBatchSequenceAdvanceStrategy.INSTANCE, true, UNHAPPY_START_LIFECYCLE,
-				RethrowingExceptionHandler.INSTANCE);
+				sequenceBarrier, true, UNHAPPY_START_LIFECYCLE, RethrowingExceptionHandler.INSTANCE);
 
 		processor.run();
 	}
@@ -56,8 +54,7 @@ public class RethrowingExceptionHandlerTest extends AbstractTest {
 		Mockito.when(sequenceBarrier.waitFor(0)).thenThrow(AlertException.INSTANCE);
 
 		final MergingBatchEventProcessor<TestEvent> processor = createProcessor(expectedEvents, expectedEvents,
-				sequenceBarrier, AfterEveryBatchSequenceAdvanceStrategy.INSTANCE, true, unhappyShutdownLifecycle,
-				RethrowingExceptionHandler.INSTANCE);
+				sequenceBarrier, true, unhappyShutdownLifecycle, RethrowingExceptionHandler.INSTANCE);
 
 		final Future<Throwable> runFuture = executor.submit(new Callable<Throwable>() {
 

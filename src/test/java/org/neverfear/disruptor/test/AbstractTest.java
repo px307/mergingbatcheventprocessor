@@ -10,10 +10,13 @@ import org.junit.Rule;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.Timeout;
 import org.mockito.Mockito;
+import org.neverfear.disruptor.ByCopyAdvanceStrategy;
+import org.neverfear.disruptor.ByReferenceAdvanceStrategy;
+import org.neverfear.disruptor.EventCopier;
 import org.neverfear.disruptor.MergeStrategy;
 import org.neverfear.disruptor.MergedEventHandler;
 import org.neverfear.disruptor.MergingBatchEventProcessor;
-import org.neverfear.disruptor.SequenceAdvanceStrategy;
+import org.neverfear.disruptor.SequenceStrategy;
 import org.neverfear.disruptor.test.exception.TestFailureException;
 import org.neverfear.disruptor.test.util.TestEvent;
 import org.neverfear.disruptor.test.util.TestEventHandler;
@@ -115,27 +118,26 @@ public abstract class AbstractTest {
 		return ringBuffer;
 	}
 
-	protected final MergeStrategy<TestEvent> createMergeStrategy(final SequenceAdvanceStrategy whenToAdvanceSequence,
-			final boolean createCopy) {
+	protected final SequenceStrategy<TestEvent> creatSequenceStrategy(final boolean createCopy) {
+		if (createCopy) {
+			return new ByCopyAdvanceStrategy<>(new EventCopier<TestEvent>() {
+
+				@Override
+				public TestEvent copy(TestEvent event) {
+					return TestEvent.copy(event);
+				}
+			});
+		} else {
+			return new ByReferenceAdvanceStrategy<>();
+		}
+	}
+
+	protected final MergeStrategy<TestEvent> createMergeStrategy() {
 		return new MergeStrategy<TestEvent>() {
 
 			@Override
 			public Object getMergeKey(final TestEvent event) {
 				return event.topic;
-			}
-
-			@Override
-			public TestEvent getMergeValue(final TestEvent event) {
-				if (createCopy) {
-					return TestEvent.copy(event);
-				} else {
-					return event;
-				}
-			}
-
-			@Override
-			public SequenceAdvanceStrategy whenToAdvanceSequence() {
-				return whenToAdvanceSequence;
 			}
 
 			@Override
@@ -154,19 +156,19 @@ public abstract class AbstractTest {
 	}
 
 	protected final MergingBatchEventProcessor<TestEvent> createProcessor(final TestEvent[] inputEvents,
-			final TestEvent[] expectedOutputEvents, final SequenceBarrier sequenceBarrier,
-			final SequenceAdvanceStrategy whenToAdvanceSequence, final boolean copyEvent, final LifecycleAware lifeCycleAware,
-			final ExceptionHandler exceptionHandler) {
+			final TestEvent[] expectedOutputEvents, final SequenceBarrier sequenceBarrier, final boolean copyEvent,
+			final LifecycleAware lifeCycleAware, final ExceptionHandler exceptionHandler) {
 
 		final RingBuffer<TestEvent> ringBuffer = createRingBuffer(inputEvents);
 
 		final MergedEventHandler<TestEvent> eventHandler = createMergedEventHandler(lifeCycleAware,
 				expectedOutputEvents);
 
-		final MergeStrategy<TestEvent> mergeStrategy = createMergeStrategy(whenToAdvanceSequence, copyEvent);
+		SequenceStrategy<TestEvent> sequenceStrategy = creatSequenceStrategy(copyEvent);
+		final MergeStrategy<TestEvent> mergeStrategy = createMergeStrategy();
 
 		final MergingBatchEventProcessor<TestEvent> processor = new MergingBatchEventProcessor<>(ringBuffer,
-				sequenceBarrier, eventHandler, mergeStrategy);
+				sequenceBarrier, eventHandler, mergeStrategy, sequenceStrategy);
 		processor.setExceptionHandler(exceptionHandler);
 		return processor;
 	}

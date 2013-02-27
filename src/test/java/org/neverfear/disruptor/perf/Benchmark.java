@@ -7,6 +7,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.neverfear.disruptor.ByReferenceAdvanceStrategy;
 import org.neverfear.disruptor.MergeStrategy;
 import org.neverfear.disruptor.PeakWaitStrategy;
 import org.neverfear.disruptor.perf.event.BenchmarkEvent;
@@ -99,7 +100,7 @@ public final class Benchmark {
 					processor = new LinkedHashMapMergingEventHandler(MERGE_STRATEGY, task);
 					break;
 				case merge:
-					processor = new MergeEventHandler(MERGE_STRATEGY, task);
+					processor = new MergeEventHandler(MERGE_STRATEGY, new ByReferenceAdvanceStrategy<BenchmarkEvent>(), task);
 					break;
 				default:
 					throw new IllegalArgumentException("Unknown argument: " + mergeType);

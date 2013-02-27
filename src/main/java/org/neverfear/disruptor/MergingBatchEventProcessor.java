@@ -33,7 +33,10 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 	private final RingBuffer<E> ringBuffer;
 	private final SequenceBarrier sequenceBarrier;
 	private final MergedEventHandler<E> eventHandler;
+	
 	private final MergeStrategy<E> mergeStrategy;
+	private final SequenceStrategy<E> sequenceStrategy;
+	
 	private final Sequence sequence = new Sequence(Sequencer.INITIAL_CURSOR_VALUE);
 
 	/**
@@ -48,11 +51,13 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 	 *            is the delegate to which events are dispatched.
 	 */
 	public MergingBatchEventProcessor(final RingBuffer<E> ringBuffer, final SequenceBarrier sequenceBarrier,
-			final MergedEventHandler<E> eventHandler, final MergeStrategy<E> mergeStrategy) {
+			final MergedEventHandler<E> eventHandler, 
+			final MergeStrategy<E> mergeStrategy, SequenceStrategy<E> sequenceStrategy) {
 		this.ringBuffer = ringBuffer;
 		this.sequenceBarrier = sequenceBarrier;
 		this.eventHandler = eventHandler;
 		this.mergeStrategy = mergeStrategy;
+		this.sequenceStrategy = sequenceStrategy;
 	}
 
 	/*
@@ -107,8 +112,6 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 		E event = null;
 		long nextSequence = this.sequence.get() + 1L;
 
-		final SequenceAdvanceStrategy advanceStrategy = this.mergeStrategy.whenToAdvanceSequence();
-
 		MergingQueue<Object, E> mergingQueue = new ArrayHashMapMergingQueue<>(mergeStrategy.estimatedKeySpace());
 		
 		// Now for the real work
@@ -150,12 +153,14 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 				 * Remove the oldest element and advance the sequence
 				 */
 				E oldestEvent = mergingQueue.removeFirst();
-
-				event = this.mergeStrategy.getMergeValue(oldestEvent);
+				event = oldestEvent;
+				
+				// Translate into the event we should pass to the handler
+				event = this.sequenceStrategy.getMergeValue(oldestEvent);
 				
 				this.eventHandler.onMergedEvent(event);
 
-				if (advanceStrategy.shouldAdvance(mergingQueue.size())) {
+				if (sequenceStrategy.shouldAdvance(mergingQueue.size())) {
 					sequence.set(nextSequence -1L);
 				}
 
