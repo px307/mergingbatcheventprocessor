@@ -2,6 +2,16 @@ package org.neverfear.disruptor;
 
 import java.util.NoSuchElementException;
 
+/**
+ * Internal interface to a simple merging queue
+ * 
+ * @author doug@neverfear.org
+ * 
+ * @param <K>
+ *            The merge key
+ * @param <V>
+ *            The value of the merged event
+ */
 interface MergingQueue<K, V> {
 	/**
 	 * Merge a value and it's key
@@ -16,7 +26,7 @@ interface MergingQueue<K, V> {
 	 * @throws NullPointerException
 	 *             If the key is null
 	 */
-	boolean put(K key, V value) throws IllegalStateException, NullPointerException;
+	boolean put(final K key, final V value) throws IllegalStateException, NullPointerException;
 
 	/**
 	 * Return the size of the queue

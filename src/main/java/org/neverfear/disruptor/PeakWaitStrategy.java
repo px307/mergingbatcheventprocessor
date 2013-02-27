@@ -16,10 +16,14 @@ import com.lmax.disruptor.WaitStrategy;
  */
 public final class PeakWaitStrategy implements WaitStrategy {
 
+	/**
+	 * Delegated wait strategy
+	 */
 	private final WaitStrategy realStrategy;
 
 	/**
 	 * Constructs a peak wait strategy around a concrete strategy.
+	 * 
 	 * @param strategy
 	 */
 	public PeakWaitStrategy(final WaitStrategy strategy) {
@@ -29,7 +33,7 @@ public final class PeakWaitStrategy implements WaitStrategy {
 	@Override
 	public long waitFor(final long sequence, final Sequence cursor, final Sequence[] dependents,
 			final SequenceBarrier barrier) throws AlertException, InterruptedException {
-		return realStrategy.waitFor(sequence, cursor, dependents, barrier);
+		return this.realStrategy.waitFor(sequence, cursor, dependents, barrier);
 	}
 
 	@Override
@@ -42,7 +46,7 @@ public final class PeakWaitStrategy implements WaitStrategy {
 				return availableSequence;
 			}
 		}
-		return realStrategy.waitFor(sequence, cursor, dependents, barrier, timeout, sourceUnit);
+		return this.realStrategy.waitFor(sequence, cursor, dependents, barrier, timeout, sourceUnit);
 	}
 
 	@Override

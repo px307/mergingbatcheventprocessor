@@ -1,8 +1,16 @@
 package org.neverfear.disruptor;
 
-public class AbstractMergeableEvent implements MergeableEvent {
+import com.lmax.disruptor.Sequencer;
 
-	private long sequence = -1;
+/**
+ * Utility class to allow people to implement the {@link MergeableEvent}.
+ * 
+ * @author doug@neverfear.org
+ * 
+ */
+public abstract class AbstractMergeableEvent implements MergeableEvent {
+
+	private long sequence = Sequencer.INITIAL_CURSOR_VALUE;
 
 	@Override
 	public void setSequence(final long sequence) {

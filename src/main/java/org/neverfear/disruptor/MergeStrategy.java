@@ -1,5 +1,13 @@
 package org.neverfear.disruptor;
 
+/**
+ * A strategy to customise the behaviour of the {@link MergingBatchEventProcessor}
+ * 
+ * @author doug@neverfear.org
+ * 
+ * @param <E>
+ *            The event type
+ */
 public interface MergeStrategy<E> {
 
 	/**
