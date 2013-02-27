@@ -19,7 +19,7 @@ public class TestEventHandler implements MergedEventHandler<TestEvent>, Lifecycl
 	}
 
 	@Override
-	public void onEvent(final TestEvent event, final long sequence) {
+	public void onEvent(final TestEvent event) {
 		System.out.println(event);
 		final TestEvent expectedEvent = this.expectedEvents[this.expectedIndex++];
 		Assert.assertEquals(expectedEvent, event);

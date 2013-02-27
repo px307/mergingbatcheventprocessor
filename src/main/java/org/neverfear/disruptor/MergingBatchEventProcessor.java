@@ -147,7 +147,7 @@ public final class MergingBatchEventProcessor<E extends MergeableEvent> implemen
 				 */
 				event = mergingQueue.remove();
 				final long oldestSequence = event.getSequence();
-				this.eventHandler.onEvent(event, oldestSequence);
+				this.eventHandler.onEvent(event);
 
 				this.sequence.set(oldestSequence - 1L);
 
