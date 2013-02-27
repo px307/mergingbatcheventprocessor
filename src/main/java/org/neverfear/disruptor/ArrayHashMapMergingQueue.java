@@ -17,7 +17,7 @@ final class ArrayHashMapMergingQueue<K, V> implements MergingQueue<K, V> {
 	}
 
 	@Override
-	public boolean merge(K key, V value) {
+	public boolean put(K key, V value) {
 		if (mergedMap.put(key, value) == null) {
 			mergedQueue.add(key);
 
@@ -32,7 +32,7 @@ final class ArrayHashMapMergingQueue<K, V> implements MergingQueue<K, V> {
 	}
 
 	@Override
-	public V removeFirst() {
+	public V remove() {
 		K oldestKey = mergedQueue.remove();
 		V value = mergedMap.remove(oldestKey);
 

@@ -144,7 +144,7 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 //					assert (whenToAdvanceSequence == AdvanceSequence.AFTER_MERGE && mergeEvent != event)
 //							|| (whenToAdvanceSequence != AdvanceSequence.AFTER_MERGE);
 
-					mergingQueue.merge(key, event);
+					mergingQueue.put(key, event);
 					
 					nextSequence++;
 				}
@@ -152,7 +152,7 @@ public final class MergingBatchEventProcessor<E> implements EventProcessor {
 				/*
 				 * Remove the oldest element and advance the sequence
 				 */
-				E oldestEvent = mergingQueue.removeFirst();
+				E oldestEvent = mergingQueue.remove();
 				event = oldestEvent;
 				
 				// Translate into the event we should pass to the handler

@@ -16,7 +16,7 @@ interface MergingQueue<K, V> {
 	 * @throws NullPointerException
 	 *             If the key is null
 	 */
-	boolean merge(K key, V value) throws IllegalStateException, NullPointerException;
+	boolean put(K key, V value) throws IllegalStateException, NullPointerException;
 
 	/**
 	 * Return the size of the queue
@@ -32,7 +32,7 @@ interface MergingQueue<K, V> {
 	 * @throws NoSuchElementException
 	 *             If this queue is empty
 	 */
-	V removeFirst() throws NoSuchElementException;
+	V remove() throws NoSuchElementException;
 
 	/**
 	 * Return if this queue is empty
