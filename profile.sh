@@ -11,7 +11,7 @@ done
 
 
 
-throughputEventCount=10000000
+throughputEventCount=100000000
 for processorType in merge linked ticket none; do
 	echo java -jar target/mergingbatcheventprocessor-1.0.0-benchmark.jar $runCount $throughputEventCount throughput $processorType
 	java -jar target/mergingbatcheventprocessor-1.0.0-benchmark.jar $runCount $throughputEventCount throughput $processorType
