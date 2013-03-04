@@ -28,7 +28,11 @@ import com.lmax.disruptor.SingleThreadedClaimStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 
 public final class Benchmark {
-	public static final String[] TOPICS = new String[] { "Red", "Green", "Blue", "Yellow", "White" };
+
+	public static final String[] TOPICS = new String[] { "Red", "Green", "Blue", "Yellow", "White", "Purple", "Black",
+			"Cyan", "Pink", "Chartreuse", "Orange", "Salmon", "Cream", "Silver", "Gold", "Brown", "Olive", "Magenta",
+			"Peach", "Rose", "Teal", "Tan", "Jade", "Lilac", "Mauve", "Crimson", "Turquoise", "Periwinkle" };
+
 	public static final MergeStrategy<BenchmarkEvent> MERGE_STRATEGY = new BenchmarkAfterQueueDrainedMergeStrategy(
 			TOPICS.length);
 
